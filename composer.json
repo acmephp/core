@@ -16,7 +16,8 @@
         "php": ">=5.4",
         "ext-openssl": "*",
         "php-http/client-implementation": "^1.0",
-        "webmozart/assert": "^1.0"
+        "webmozart/assert": "^1.0",
+        "webmozart/key-value-store": "@beta"
     },
     "require-dev": {
         "php-http/curl-client": "^1.1.0",
