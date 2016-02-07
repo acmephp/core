@@ -20,7 +20,7 @@ use Psr\Log\LoggerInterface;
 class AcmeClientTest extends AbstractAcmeClientTest
 {
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     protected function createClient($keyPairsDirectory, LoggerInterface $logger = null)
     {

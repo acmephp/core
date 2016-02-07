@@ -37,7 +37,7 @@ abstract class AbstractAcmeClientTest extends UnitTest
     protected $client;
 
     /**
-     * @param string $keyPairsDirectory
+     * @param string               $keyPairsDirectory
      * @param LoggerInterface|null $logger
      *
      * @return AcmeClient
@@ -45,7 +45,7 @@ abstract class AbstractAcmeClientTest extends UnitTest
     abstract protected function createClient($keyPairsDirectory, LoggerInterface $logger = null);
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     protected function setUp()
     {
@@ -56,7 +56,7 @@ abstract class AbstractAcmeClientTest extends UnitTest
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     protected function tearDown()
     {

@@ -36,7 +36,7 @@ class KeyPair
     private $privateKey;
 
     /**
-     * @param string $name
+     * @param string   $name
      * @param resource $publicKey
      * @param resource $privateKey
      */

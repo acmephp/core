@@ -41,20 +41,21 @@ class SecureHttpClient
     private $lastResponse;
 
     /**
-     * @param string $authority
+     * @param string  $authority
      * @param KeyPair $accountKeyPair
      */
     public function __construct($authority, KeyPair $accountKeyPair)
     {
         $this->accountKeyPair = $accountKeyPair;
         $this->httpClient = new Client([
-            'base_uri' => $authority
+            'base_uri' => $authority,
         ]);
     }
 
     /**
      * @param string $endpoint
-     * @param array $payload
+     * @param array  $payload
+     *
      * @return array
      */
     public function request($endpoint, array $payload)
@@ -66,12 +67,12 @@ class SecureHttpClient
             'alg' => 'RS256',
             'jwk' => [
                 'kty' => 'RSA',
-                'n' => Base64UrlSafeEncoder::encode($details['rsa']['n']),
-                'e' => Base64UrlSafeEncoder::encode($details['rsa']['e']),
+                'n'   => Base64UrlSafeEncoder::encode($details['rsa']['n']),
+                'e'   => Base64UrlSafeEncoder::encode($details['rsa']['e']),
             ],
         ];
 
-        if (! $this->lastResponse) {
+        if (!$this->lastResponse) {
             $this->lastResponse = $this->doRequest('GET', '/directory');
         }
 
@@ -81,21 +82,21 @@ class SecureHttpClient
         $payload = Base64UrlSafeEncoder::encode(str_replace('\\/', '/', json_encode($payload)));
         $protected = Base64UrlSafeEncoder::encode(json_encode($protected));
 
-        openssl_sign($protected . '.' . $payload, $signature, $privateKey, 'SHA256');
+        openssl_sign($protected.'.'.$payload, $signature, $privateKey, 'SHA256');
         $signature = Base64UrlSafeEncoder::encode($signature);
 
         $payload = [
-            'header' => $header,
+            'header'    => $header,
             'protected' => $protected,
-            'payload' => $payload,
-            'signature' => $signature
+            'payload'   => $payload,
+            'signature' => $signature,
         ];
 
         $this->lastResponse = $this->doRequest('POST', $endpoint, $payload);
 
         $data = json_decode(\GuzzleHttp\Psr7\readline($this->lastResponse->getBody()), true);
 
-        if (! $data) {
+        if (!$data) {
             throw new AcmeInvalidResponseException('POST', $endpoint, $payload, $this->lastResponse);
         }
 
@@ -105,7 +106,7 @@ class SecureHttpClient
     /**
      * @param string $method
      * @param string $endpoint
-     * @param array $data
+     * @param array  $data
      *
      * @return ResponseInterface
      */

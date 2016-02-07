@@ -47,11 +47,11 @@ class KeyPairManager
      */
     public function getAccountKeyPair()
     {
-        if (! $this->accountKeyPair) {
+        if (!$this->accountKeyPair) {
             $this->accountKeyPair = $this->load('_account');
         }
 
-        if (! $this->accountKeyPair) {
+        if (!$this->accountKeyPair) {
             $this->accountKeyPair = $this->generate('_account');
         }
 
@@ -63,20 +63,20 @@ class KeyPairManager
      *
      * @param string $name
      *
-     * @return KeyPair|null
-     *
      * @throws \RuntimeException
+     *
+     * @return KeyPair|null
      */
     public function load($name)
     {
-        $publicKeyFile = $this->keyPairsDirectory . '/' . $name . '/public.pem';
-        $privateKeyFile = $this->keyPairsDirectory . '/' . $name . '/private.pem';
+        $publicKeyFile = $this->keyPairsDirectory.'/'.$name.'/public.pem';
+        $privateKeyFile = $this->keyPairsDirectory.'/'.$name.'/private.pem';
 
-        if (! file_exists($publicKeyFile) || ! file_exists($privateKeyFile)) {
-            return null;
+        if (!file_exists($publicKeyFile) || !file_exists($privateKeyFile)) {
+            return;
         }
 
-        if (false === ($publicKey = openssl_pkey_get_public('file://' . $publicKeyFile))) {
+        if (false === ($publicKey = openssl_pkey_get_public('file://'.$publicKeyFile))) {
             throw new \RuntimeException(sprintf(
                 'Reading of the public key file "%s" failed with message: %s',
                 $publicKeyFile,
@@ -84,7 +84,7 @@ class KeyPairManager
             ));
         }
 
-        if (false === ($privateKey = openssl_pkey_get_private('file://' . $privateKeyFile))) {
+        if (false === ($privateKey = openssl_pkey_get_private('file://'.$privateKeyFile))) {
             throw new \RuntimeException(sprintf(
                 'Reading of the private key file "%s" failed with message: %s',
                 $privateKeyFile,
@@ -100,27 +100,27 @@ class KeyPairManager
      *
      * @param string $name
      *
-     * @return KeyPair
-     *
      * @throws \RuntimeException
+     *
+     * @return KeyPair
      */
     public function generate($name)
     {
-        $keyDir = $this->keyPairsDirectory . '/' . $name;
-        $publicKeyFile = $keyDir . '/public.pem';
-        $privateKeyFile = $keyDir . '/private.pem';
+        $keyDir = $this->keyPairsDirectory.'/'.$name;
+        $publicKeyFile = $keyDir.'/public.pem';
+        $privateKeyFile = $keyDir.'/private.pem';
 
         if (file_exists($publicKeyFile) && file_exists($privateKeyFile)) {
-            return null;
+            return;
         }
 
-        if (! @mkdir($keyDir, 0777, true) && ! is_dir($keyDir)) {
+        if (!@mkdir($keyDir, 0777, true) && !is_dir($keyDir)) {
             throw new \RuntimeException(sprintf('The directory "%s" could not be created', $keyDir));
         }
 
-        $key = openssl_pkey_new([ 'private_key_type' => OPENSSL_KEYTYPE_RSA, 'private_key_bits' => 4096 ]);
+        $key = openssl_pkey_new(['private_key_type' => OPENSSL_KEYTYPE_RSA, 'private_key_bits' => 4096]);
 
-        if (! openssl_pkey_export($key, $privateKey)) {
+        if (!openssl_pkey_export($key, $privateKey)) {
             throw new \RuntimeException(sprintf('OpenSSL key export failed during generation of key "%s"', $name));
         }
 
