@@ -53,15 +53,6 @@ class KeyPairManagerTest extends UnitTest
      */
     public function testDirectoryNotReadable()
     {
-        new KeyPairManager(__DIR__.'/../Fixtures/not-readable');
-    }
-
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage The path where to store SSL key-pairs should be writable.
-     */
-    public function testDirectoryNotWritable()
-    {
-        new KeyPairManager(__DIR__.'/../Fixtures/not-writable');
+        new KeyPairManager(__DIR__.'/invalid');
     }
 }

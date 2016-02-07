@@ -37,8 +37,6 @@ abstract class UnitTest extends \PHPUnit_Framework_TestCase
 
     protected function getTempDir()
     {
-        // str_replace('\\', '/', realpath(sys_get_temp_dir()));
-
-        return __DIR__.'/Fixtures/tmp';
+        return str_replace('\\', '/', realpath(sys_get_temp_dir()));
     }
 }
