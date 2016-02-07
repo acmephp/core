@@ -11,124 +11,97 @@
 
 namespace AcmePhp\Core\Ssl;
 
-use Webmozart\Assert\Assert;
+use AcmePhp\Core\Ssl\Exception\GeneratingSslKeyFailedException;
+use AcmePhp\Core\Ssl\Exception\LoadingSslKeyFailedException;
 
 /**
- * Manipulate SSL key pairs.
+ * Load and generate KeyPair objects using OpenSSL.
  *
  * @author Titouan Galopin <galopintitouan@gmail.com>
  */
 class KeyPairManager
 {
     /**
-     * @var string
-     */
-    private $keyPairsDirectory;
-
-    /**
-     * @var KeyPair
-     */
-    private $accountKeyPair;
-
-    /**
-     * @param string $keyPairsDirectory
-     */
-    public function __construct($keyPairsDirectory)
-    {
-        Assert::stringNotEmpty($keyPairsDirectory, 'The path where to store SSL key-pairs should be a string. Got: %s');
-        Assert::readable($keyPairsDirectory, 'The path where to store SSL key-pairs should be readable.');
-        Assert::writable($keyPairsDirectory, 'The path where to store SSL key-pairs should be writable.');
-
-        $this->keyPairsDirectory = $keyPairsDirectory;
-    }
-
-    /**
+     * Load a KeyPair.
+     *
+     * @param string $publicKeyFile The path to the public key file.
+     * @param string $privateKeyFile The path to the private key file.
+     *
      * @return KeyPair
+     *
+     * @throws LoadingSslKeyFailedException If OpenSSL failed to load the keys.
      */
-    public function getAccountKeyPair()
+    public function loadKeyPair($publicKeyFile, $privateKeyFile)
     {
-        if (!$this->accountKeyPair) {
-            $this->accountKeyPair = $this->load('_account');
-        }
-
-        if (!$this->accountKeyPair) {
-            $this->accountKeyPair = $this->generate('_account');
-        }
-
-        return $this->accountKeyPair;
+        return self::load($publicKeyFile, $privateKeyFile);
     }
 
     /**
-     * Load a KeyPair by its name.
+     * Load a KeyPair.
      *
-     * @param string $name
+     * @param string $publicKeyFile The path to the public key file.
+     * @param string $privateKeyFile The path to the private key file.
      *
-     * @throws \RuntimeException
+     * @return KeyPair
      *
-     * @return KeyPair|null
+     * @throws LoadingSslKeyFailedException If OpenSSL failed to load the keys.
      */
-    public function load($name)
+    public static function load($publicKeyFile, $privateKeyFile)
     {
-        $publicKeyFile = $this->keyPairsDirectory.'/'.$name.'/public.pem';
-        $privateKeyFile = $this->keyPairsDirectory.'/'.$name.'/private.pem';
+        if (!file_exists($publicKeyFile)) {
+            throw new LoadingSslKeyFailedException('public', $publicKeyFile, 'file does not exists');
+        }
 
-        if (!file_exists($publicKeyFile) || !file_exists($privateKeyFile)) {
-            return;
+        if (!file_exists($privateKeyFile)) {
+            throw new LoadingSslKeyFailedException('private', $privateKeyFile, 'file does not exists');
         }
 
         if (false === ($publicKey = openssl_pkey_get_public('file://'.$publicKeyFile))) {
-            throw new \RuntimeException(sprintf(
-                'Reading of the public key file "%s" failed with message: %s',
-                $publicKeyFile,
-                openssl_error_string()
-            ));
+            throw new LoadingSslKeyFailedException('public', $publicKeyFile, openssl_error_string());
         }
 
         if (false === ($privateKey = openssl_pkey_get_private('file://'.$privateKeyFile))) {
-            throw new \RuntimeException(sprintf(
-                'Reading of the private key file "%s" failed with message: %s',
-                $privateKeyFile,
-                openssl_error_string()
-            ));
+            throw new LoadingSslKeyFailedException('public', $privateKeyFile, openssl_error_string());
         }
 
-        return new KeyPair($name, $publicKey, $privateKey);
+        return new KeyPair($publicKey, $privateKey);
     }
 
     /**
-     * Geenerate a KeyPair for the given name.
-     *
-     * @param string $name
-     *
-     * @throws \RuntimeException
+     * Geenrate a KeyPair.
      *
      * @return KeyPair
+     *
+     * @throws GeneratingSslKeyFailedException If OpenSSL failed to generate keys.
      */
-    public function generate($name)
+    public function generateKeyPair()
     {
-        $keyDir = $this->keyPairsDirectory.'/'.$name;
-        $publicKeyFile = $keyDir.'/public.pem';
-        $privateKeyFile = $keyDir.'/private.pem';
+        return self::generate();
+    }
 
-        if (file_exists($publicKeyFile) && file_exists($privateKeyFile)) {
-            return;
-        }
-
-        if (!@mkdir($keyDir, 0777, true) && !is_dir($keyDir)) {
-            throw new \RuntimeException(sprintf('The directory "%s" could not be created', $keyDir));
-        }
-
-        $key = openssl_pkey_new(['private_key_type' => OPENSSL_KEYTYPE_RSA, 'private_key_bits' => 4096]);
+    /**
+     * Geenrate a KeyPair.
+     *
+     * @return KeyPair
+     *
+     * @throws GeneratingSslKeyFailedException If OpenSSL failed to generate keys.
+     */
+    public static function generate()
+    {
+        $key = openssl_pkey_new([
+            'private_key_type' => OPENSSL_KEYTYPE_RSA,
+            'private_key_bits' => 4096
+        ]);
 
         if (!openssl_pkey_export($key, $privateKey)) {
-            throw new \RuntimeException(sprintf('OpenSSL key export failed during generation of key "%s"', $name));
+            throw new GeneratingSslKeyFailedException(sprintf(
+                'OpenSSL key export failed during generation with error: %s',
+                openssl_error_string()
+            ));
         }
 
         $details = openssl_pkey_get_details($key);
 
-        file_put_contents($publicKeyFile, $details['key']);
-        file_put_contents($privateKeyFile, $privateKey);
-
-        return $this->load($name);
+        return new KeyPair(openssl_pkey_get_public($details['key']), openssl_pkey_get_private($privateKey));
     }
 }

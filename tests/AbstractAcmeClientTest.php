@@ -11,10 +11,10 @@
 
 namespace AcmePhp\Core\Tests;
 
-use AcmePhp\Core\AcmeClient;
-use AcmePhp\Core\Challenge\Challenge;
+use AcmePhp\Core\AbstractAcmeClient;
+use AcmePhp\Core\Ssl\KeyPair;
+use AcmePhp\Core\Ssl\KeyPairManager;
 use AcmePhp\Core\Tests\Mock\ArrayLogger;
-use GuzzleHttp\Exception\ClientException;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -23,9 +23,9 @@ use Psr\Log\LoggerInterface;
 abstract class AbstractAcmeClientTest extends UnitTest
 {
     /**
-     * @var string
+     * @var ArrayLogger
      */
-    protected $keyPairsDirectory;
+    protected $keyPair;
 
     /**
      * @var ArrayLogger
@@ -33,27 +33,26 @@ abstract class AbstractAcmeClientTest extends UnitTest
     protected $logger;
 
     /**
-     * @var AcmeClient
+     * @var AbstractAcmeClient
      */
     protected $client;
 
     /**
-     * @param string               $keyPairsDirectory
+     * @param KeyPair $accountKeyPair
      * @param LoggerInterface|null $logger
      *
-     * @return AcmeClient
+     * @return AbstractAcmeClient
      */
-    abstract protected function createClient($keyPairsDirectory, LoggerInterface $logger = null);
+    abstract protected function createClient(KeyPair $accountKeyPair, LoggerInterface $logger = null);
 
     /**
      * {@inheritdoc}
      */
     protected function setUp()
     {
-        $this->keyPairsDirectory = $this->makeTempDir();
+        $this->keyPair = KeyPairManager::generate();
         $this->logger = new ArrayLogger();
-
-        $this->client = $this->createClient($this->keyPairsDirectory, $this->logger);
+        $this->client = $this->createClient($this->keyPair, $this->logger);
     }
 
     /**
@@ -61,8 +60,7 @@ abstract class AbstractAcmeClientTest extends UnitTest
      */
     protected function tearDown()
     {
-        $this->clearTempDir();
-
+        $this->keyPair = null;
         $this->logger = null;
         $this->client = null;
     }
@@ -102,7 +100,7 @@ abstract class AbstractAcmeClientTest extends UnitTest
 
     public function testRequestChallengeWithoutRegistration()
     {
-        $this->setExpectedExceptionRegExp(ClientException::class, '~.+403.+~');
+        $this->setExpectedExceptionRegExp(ClientException::class, '~403~');
         $this->client->requestChallenge('example.com');
     }
 

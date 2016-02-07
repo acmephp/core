@@ -21,11 +21,6 @@ use Webmozart\Assert\Assert;
 class KeyPair
 {
     /**
-     * @var string
-     */
-    private $name;
-
-    /**
      * @var resource
      */
     private $publicKey;
@@ -36,29 +31,18 @@ class KeyPair
     private $privateKey;
 
     /**
-     * @param string   $name
      * @param resource $publicKey
      * @param resource $privateKey
      */
-    public function __construct($name, $publicKey, $privateKey)
+    public function __construct($publicKey, $privateKey)
     {
-        Assert::stringNotEmpty($name, 'KeyPair::$name should be a non-empty string. Got: %s');
         Assert::notEmpty($publicKey, 'KeyPair::$publicKey should not be empty');
         Assert::notEmpty($privateKey, 'KeyPair::$privateKey should not be empty');
         Assert::resource($publicKey, 'OpenSSL key', 'KeyPair::$publicKey should be a resource of type %2$s. Got: %s');
         Assert::resource($privateKey, 'OpenSSL key', 'KeyPair::$privateKey should be a resource of type %2$s. Got: %s');
 
-        $this->name = $name;
         $this->publicKey = $publicKey;
         $this->privateKey = $privateKey;
-    }
-
-    /**
-     * @return string
-     */
-    public function getName()
-    {
-        return $this->name;
     }
 
     /**

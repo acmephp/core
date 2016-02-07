@@ -9,17 +9,15 @@
  * file that was distributed with this source code.
  */
 
-namespace AcmePhp\Core\Exception;
+namespace AcmePhp\Core\Ssl\Exception;
+
+use AcmePhp\Core\Exception\AcmePhpException;
 
 /**
- * The ACME server does not support HTTP challenge.
+ * Generating of a new SSL key failed.
  *
  * @author Titouan Galopin <galopintitouan@gmail.com>
  */
-class AcmeHttpChallengeNotSupportedException extends \RuntimeException
+class GeneratingSslKeyFailedException extends AcmePhpException
 {
-    public function __construct()
-    {
-        parent::__construct('This ACME server does not support HTTP challenge.');
-    }
 }

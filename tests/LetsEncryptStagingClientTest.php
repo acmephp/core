@@ -12,18 +12,19 @@
 namespace AcmePhp\Core\Tests;
 
 use AcmePhp\Core\LetsEncryptStagingClient;
+use AcmePhp\Core\Ssl\KeyPair;
 use Psr\Log\LoggerInterface;
 
 /**
  * @author Titouan Galopin <galopintitouan@gmail.com>
  */
-class AcmeClientTest extends AbstractAcmeClientTest
+class LetsEncryptStagingClientTest extends AbstractAcmeClientTest
 {
     /**
      * {@inheritdoc}
      */
-    protected function createClient($keyPairsDirectory, LoggerInterface $logger = null)
+    protected function createClient(KeyPair $accountKeyPair, LoggerInterface $logger = null)
     {
-        return new LetsEncryptStagingClient($keyPairsDirectory, $logger);
+        return new LetsEncryptStagingClient($accountKeyPair, $logger);
     }
 }

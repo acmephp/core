@@ -9,20 +9,13 @@
  * file that was distributed with this source code.
  */
 
-namespace AcmePhp\Core;
+namespace AcmePhp\Core\Exception;
 
 /**
- * Let's Encrypt client.
+ * Base of all the ACME PHP exceptions.
  *
  * @author Titouan Galopin <galopintitouan@gmail.com>
  */
-class LetsEncryptStagingClient extends LetsEncryptClient
+class AcmePhpException extends \RuntimeException
 {
-    /**
-     * @inheritdoc
-     */
-    protected function getCABaseUrl()
-    {
-        return 'hhttps://acme-staging.api.letsencrypt.org';
-    }
 }

@@ -9,20 +9,17 @@
  * file that was distributed with this source code.
  */
 
-namespace AcmePhp\Core;
+namespace AcmePhp\Core\Protocol\Exception;
 
 /**
- * Let's Encrypt client.
+ * The ACME server does not support HTTP challenge.
  *
  * @author Titouan Galopin <galopintitouan@gmail.com>
  */
-class LetsEncryptStagingClient extends LetsEncryptClient
+class AcmeChallengeNotSupportedException extends AcmeProtocolException
 {
-    /**
-     * @inheritdoc
-     */
-    protected function getCABaseUrl()
+    public function __construct()
     {
-        return 'hhttps://acme-staging.api.letsencrypt.org';
+        parent::__construct('This ACME server does not support HTTP challenge.');
     }
 }

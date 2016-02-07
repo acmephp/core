@@ -11,24 +11,26 @@
 
 namespace AcmePhp\Core;
 
-use Psr\Log\LoggerInterface;
-
 /**
- * Let's Encrypt implementation of the AcmeClient.
+ * Let's Encrypt client.
  *
  * @author Titouan Galopin <galopintitouan@gmail.com>
  */
-class LetsEncryptClient extends AcmeClient
+class LetsEncryptClient extends AbstractAcmeClient
 {
-    const AUTHORITY = 'https://acme-v01.api.letsencrypt.org';
-    const LICENSE = 'https://letsencrypt.org/documents/LE-SA-v1.0.1-July-27-2015.pdf';
+    /**
+     * @inheritdoc
+     */
+    protected function getCABaseUrl()
+    {
+        return 'https://acme-v01.api.letsencrypt.org';
+    }
 
     /**
-     * @param string               $keyPairsDirectory
-     * @param LoggerInterface|null $logger
+     * @inheritdoc
      */
-    public function __construct($keyPairsDirectory, LoggerInterface $logger = null)
+    protected function getCALicense()
     {
-        parent::__construct(self::AUTHORITY, self::LICENSE, $keyPairsDirectory, $logger);
+        return 'https://letsencrypt.org/documents/LE-SA-v1.0.1-July-27-2015.pdf';
     }
 }

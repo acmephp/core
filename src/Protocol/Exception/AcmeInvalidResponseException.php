@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace AcmePhp\Core\Exception;
+namespace AcmePhp\Core\Protocol\Exception;
 
 use Psr\Http\Message\ResponseInterface;
 
@@ -18,7 +18,7 @@ use Psr\Http\Message\ResponseInterface;
  *
  * @author Titouan Galopin <galopintitouan@gmail.com>
  */
-class AcmeInvalidResponseException extends \RuntimeException
+class AcmeInvalidResponseException extends AcmeProtocolException
 {
     /**
      * @var string

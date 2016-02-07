@@ -9,9 +9,9 @@
  * file that was distributed with this source code.
  */
 
-namespace AcmePhp\Core\Http;
+namespace AcmePhp\Core\Protocol;
 
-use AcmePhp\Core\Exception\AcmeInvalidResponseException;
+use AcmePhp\Core\Protocol\Exception\AcmeInvalidResponseException;
 use AcmePhp\Core\Ssl\KeyPair;
 use AcmePhp\Core\Util\Base64UrlSafeEncoder;
 use GuzzleHttp\Client;
@@ -53,10 +53,14 @@ class SecureHttpClient
     }
 
     /**
+     * Send a request encoded in the format defined by the ACME protocol.
+     *
      * @param string $endpoint
      * @param array  $payload
      *
      * @return array
+     *
+     * @throws AcmeInvalidResponseException If the server returns an invalid response.
      */
     public function request($endpoint, array $payload)
     {

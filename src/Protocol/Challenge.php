@@ -9,7 +9,9 @@
  * file that was distributed with this source code.
  */
 
-namespace AcmePhp\Core\Challenge;
+namespace AcmePhp\Core\Protocol;
+
+use Webmozart\Assert\Assert;
 
 /**
  * Represent a ACME challenge.
@@ -18,6 +20,11 @@ namespace AcmePhp\Core\Challenge;
  */
 class Challenge
 {
+    /**
+     * @var string
+     */
+    private $domain;
+
     /**
      * @var string
      */
@@ -34,15 +41,30 @@ class Challenge
     private $payload;
 
     /**
+     * @param string $domain
      * @param string $url
      * @param string $token
      * @param string $payload
      */
-    public function __construct($url, $token, $payload)
+    public function __construct($domain, $url, $token, $payload)
     {
+        Assert::stringNotEmpty($domain, 'Challenge::$domain expected a non-empty string. Got: %s');
+        Assert::stringNotEmpty($url, 'Challenge::$url expected a non-empty string. Got: %s');
+        Assert::stringNotEmpty($token, 'Challenge::$token expected a non-empty string. Got: %s');
+        Assert::stringNotEmpty($payload, 'Challenge::$payload expected a non-empty string. Got: %s');
+
+        $this->domain = $domain;
         $this->url = $url;
         $this->token = $token;
         $this->payload = $payload;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDomain()
+    {
+        return $this->domain;
     }
 
     /**
