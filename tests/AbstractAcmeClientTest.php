@@ -102,7 +102,7 @@ abstract class AbstractAcmeClientTest extends UnitTest
 
     public function testRequestChallengeWithoutRegistration()
     {
-        $this->setExpectedExceptionRegExp(ClientException::class, '~.+No registration exists matching provided key.+~');
+        $this->setExpectedExceptionRegExp(ClientException::class, '~.+403.+~');
         $this->client->requestChallenge('example.com');
     }
 
