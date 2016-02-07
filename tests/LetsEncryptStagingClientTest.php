@@ -23,7 +23,7 @@ class LetsEncryptStagingClientTest extends AbstractAcmeClientTest
     /**
      * {@inheritdoc}
      */
-    protected function createClient(KeyPair $accountKeyPair, LoggerInterface $logger = null)
+    protected function createClient(KeyPair $accountKeyPair = null, LoggerInterface $logger = null)
     {
         return new LetsEncryptStagingClient($accountKeyPair, $logger);
     }

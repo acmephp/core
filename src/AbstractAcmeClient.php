@@ -161,7 +161,7 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
 
         $this->log(LogLevel::DEBUG, sprintf('Registering account with payload %s ...', json_encode($payload)));
 
-        $response = $this->httpClient->request('/acme/new-reg', $payload);
+        $response = $this->httpClient->request('POST', '/acme/new-reg', $payload);
 
         $this->log(LogLevel::DEBUG, 'Account registered');
 
@@ -180,10 +180,10 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
 
         $this->log(LogLevel::DEBUG, sprintf('Requesting challenge for domain %s ...', $domain));
 
-        $response = $this->httpClient->request('/acme/new-authz', [
-            'resource'   => 'new-authz',
+        $response = $this->httpClient->request('POST', '/acme/new-authz', [
+            'resource' => 'new-authz',
             'identifier' => [
-                'type'  => 'dns',
+                'type' => 'dns',
                 'value' => $domain,
             ],
         ]);
@@ -196,6 +196,8 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
             if ('http-01' === $challenge['type']) {
                 $token = $challenge['token'];
 
+                $this->log(LogLevel::DEBUG, sprintf('Challenge data successfully found: %s', $token));
+
                 $header = [
                     // This order matters
                     'e' => Base64UrlSafeEncoder::encode($accountKeyDetails['rsa']['e']),
@@ -204,10 +206,9 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
                 ];
 
                 $payload = $token . '.' . Base64UrlSafeEncoder::encode(hash('sha256', json_encode($header), true));
+                $location = $this->httpClient->getLastLocation();
 
-                $this->log(LogLevel::DEBUG, sprintf('Challenge data successfully found: %s', $token));
-
-                return new Challenge($domain, $challenge['uri'], $token, $payload);
+                return new Challenge($domain, $challenge['uri'], $token, $payload, $location);
             }
         }
 
@@ -222,7 +223,56 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
      */
     protected function doCheckChallenge($challenge, $timeout)
     {
-        // TODO
+        $this->log(LogLevel::DEBUG, sprintf(
+            'Asking server to challenge http://%s/.well-known/acme-challenge/%s ...',
+            $challenge->getDomain(),
+            $challenge->getToken()
+        ));
+
+        $payload = [
+            'resource' => 'challenge',
+            'type' => 'http-01',
+            'keyAuthorization' => $challenge->getPayload(),
+            'token' => $challenge->getToken(),
+        ];
+
+        $response = $this->httpClient->request('POST', $challenge->getUrl(), $payload);
+
+        if (empty($response['status']) || 'invalid' === $response['status']) {
+            $this->log(LogLevel::ERROR, sprintf('Check challenge failed (body: %s)', json_encode($response)));
+
+            return false;
+        }
+
+        // Waiting loop
+        $waitingTime = 0;
+
+        while ($waitingTime < $timeout) {
+            $response = $this->httpClient->request('GET', $challenge->getLocation(), []);
+
+            if (empty($response['status']) || 'invalid' === $response['status']) {
+                $this->log(LogLevel::ERROR, sprintf('Check challenge failed (body: %s)', json_encode($response)));
+
+                return false;
+            }
+
+            if ('pending' !== $response['status']) {
+                break;
+            }
+
+            $waitingTime++;
+            sleep(1);
+        }
+
+        if ('pending' === $response['status']) {
+            $this->log(LogLevel::ERROR, sprintf('Check challenge request timed out (body: %s)', json_encode($response)));
+
+            return false;
+        }
+
+        $this->log(LogLevel::ERROR, sprintf('Check challenge request succeded (body: %s)', json_encode($response)));
+
+        return true;
     }
 
     /**

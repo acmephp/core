@@ -41,12 +41,18 @@ class Challenge
     private $payload;
 
     /**
+     * @var string
+     */
+    private $location;
+
+    /**
      * @param string $domain
      * @param string $url
      * @param string $token
      * @param string $payload
+     * @param $location
      */
-    public function __construct($domain, $url, $token, $payload)
+    public function __construct($domain, $url, $token, $payload, $location)
     {
         Assert::stringNotEmpty($domain, 'Challenge::$domain expected a non-empty string. Got: %s');
         Assert::stringNotEmpty($url, 'Challenge::$url expected a non-empty string. Got: %s');
@@ -57,6 +63,7 @@ class Challenge
         $this->url = $url;
         $this->token = $token;
         $this->payload = $payload;
+        $this->location = $location;
     }
 
     /**
@@ -89,5 +96,13 @@ class Challenge
     public function getPayload()
     {
         return $this->payload;
+    }
+
+    /**
+     * @return string
+     */
+    public function getLocation()
+    {
+        return $this->location;
     }
 }

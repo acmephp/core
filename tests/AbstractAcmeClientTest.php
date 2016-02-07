@@ -44,7 +44,7 @@ abstract class AbstractAcmeClientTest extends UnitTest
      *
      * @return AbstractAcmeClient
      */
-    abstract protected function createClient(KeyPair $accountKeyPair, LoggerInterface $logger = null);
+    abstract protected function createClient(KeyPair $accountKeyPair = null, LoggerInterface $logger = null);
 
     /**
      * {@inheritdoc}
@@ -69,6 +69,14 @@ abstract class AbstractAcmeClientTest extends UnitTest
     /*
      * Register account
      */
+
+    /**
+     * @expectedException \AcmePhp\Core\Exception\AccountKeyPairMissingException
+     */
+    public function testRegisterAccountWithoutAccount()
+    {
+        $this->createClient()->registerAccount();
+    }
 
     public function testRegisterAccountWithoutEmail()
     {
@@ -125,11 +133,38 @@ abstract class AbstractAcmeClientTest extends UnitTest
      * Request challenge
      */
 
+    /**
+     * @expectedException \AcmePhp\Core\Exception\AccountKeyPairMissingException
+     */
+    public function testRequestChallengeWithoutAccount()
+    {
+        $this->createClient()->requestChallenge('example.com');
+    }
+
     public function testRequestChallengeWithRegistration()
     {
         $this->client->registerAccount();
         $challenge = $this->client->requestChallenge('example.com');
 
         $this->assertInstanceOf(Challenge::class, $challenge);
+    }
+
+
+    /*
+     * Full scenario
+     */
+
+    public function testFullScenario()
+    {
+        $this->client->registerAccount();
+
+        $challenge = $this->client->requestChallenge('example.com');
+        $this->assertInstanceOf(Challenge::class, $challenge);
+
+        // This will failas we don't have a server to test it properly
+        $this->assertFalse($this->client->checkChallenge($challenge));
+
+        // This should not issue a certificate
+        $this->assertNull($this->client->requestCertificate('example.com', KeyPairManager::generate()));
     }
 }

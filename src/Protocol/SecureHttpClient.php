@@ -55,14 +55,13 @@ class SecureHttpClient
     /**
      * Send a request encoded in the format defined by the ACME protocol.
      *
+     * @param string $method
      * @param string $endpoint
-     * @param array  $payload
+     * @param array $payload
+     * @return array If the server returns an invalid response.
      *
-     * @throws AcmeInvalidResponseException If the server returns an invalid response.
-     *
-     * @return array
      */
-    public function request($endpoint, array $payload)
+    public function request($method, $endpoint, array $payload)
     {
         $privateKey = $this->accountKeyPair->getPrivateKey();
         $details = openssl_pkey_get_details($privateKey);
@@ -96,15 +95,23 @@ class SecureHttpClient
             'signature' => $signature,
         ];
 
-        $this->lastResponse = $this->doRequest('POST', $endpoint, $payload);
+        $this->lastResponse = $this->doRequest($method, $endpoint, $payload);
 
         $data = json_decode(\GuzzleHttp\Psr7\readline($this->lastResponse->getBody()), true);
 
         if (!$data) {
-            throw new AcmeInvalidResponseException('POST', $endpoint, $payload, $this->lastResponse);
+            throw new AcmeInvalidResponseException($method, $endpoint, $payload, $this->lastResponse);
         }
 
         return $data;
+    }
+
+    /**
+     * @return string
+     */
+    public function getLastLocation()
+    {
+        return $this->lastResponse->getHeaderLine('Location');
     }
 
     /**
