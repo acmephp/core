@@ -12,6 +12,7 @@
 namespace AcmePhp\Core\Tests;
 
 use AcmePhp\Core\AcmeClient;
+use AcmePhp\Core\Challenge\Challenge;
 use AcmePhp\Core\Tests\Mock\ArrayLogger;
 use GuzzleHttp\Exception\ClientException;
 use Psr\Log\LoggerInterface;
@@ -108,6 +109,8 @@ abstract class AbstractAcmeClientTest extends UnitTest
     public function testRequestChallengeWithRegistration()
     {
         $this->client->registerAccount();
-        $this->client->requestChallenge('example.com');
+        $challenge = $this->client->requestChallenge('example.com');
+
+        $this->assertInstanceOf(Challenge::class, $challenge);
     }
 }

@@ -9,11 +9,13 @@
  * file that was distributed with this source code.
  */
 
-namespace AcmePhp\Core\Ssl;
+namespace AcmePhp\Core\Exception;
 
 use Psr\Http\Message\ResponseInterface;
 
 /**
+ * The ACME server returned an invalid response.
+ *
  * @author Titouan Galopin <galopintitouan@gmail.com>
  */
 class AcmeInvalidResponseException extends \RuntimeException

@@ -11,8 +11,11 @@
 
 namespace AcmePhp\Core;
 
+use AcmePhp\Core\Challenge\Challenge;
+use AcmePhp\Core\Exception\AcmeHttpChallengeNotSupportedException;
 use AcmePhp\Core\Http\SecureHttpClient;
 use AcmePhp\Core\Ssl\KeyPairManager;
+use AcmePhp\Core\Util\Base64UrlSafeEncoder;
 use Psr\Log\LoggerInterface;
 use Webmozart\Assert\Assert;
 
@@ -94,12 +97,16 @@ class AcmeClient
 
     /**
      * Request the challenge of a given domain.
-     * Returns a Token to expose on a specific path to validate the domain.
+     * Returns a ChallengeResponse for domain validation.
      *
-     * @param $domain
+     * @param string $domain
+     * @return Challenge
      */
     public function requestChallenge($domain)
     {
+        $privateAccountKey = $this->keyPairManager->getAccountKeyPair()->getPrivateKey();
+        $accountKeyDetails = openssl_pkey_get_details($privateAccountKey);
+
         $this->log('info', sprintf('Requesting challenge for domain "%s"', $domain));
 
         $response = $this->httpClient->request('/acme/new-authz', [
@@ -110,8 +117,28 @@ class AcmeClient
             ],
         ]);
 
-        var_dump($response);
-        exit;
+        if (! isset($response['challenges']) || 0 === count($response['challenges'])) {
+            throw new AcmeHttpChallengeNotSupportedException();
+        }
+
+        foreach ($response['challenges'] as $challenge) {
+            if ('http-01' === $challenge['type']) {
+                $token = $challenge['token'];
+
+                $header = [
+                    // This order matters
+                    'e' => Base64UrlSafeEncoder::encode($accountKeyDetails['rsa']['e']),
+                    'kty' => 'RSA',
+                    'n' => Base64UrlSafeEncoder::encode($accountKeyDetails['rsa']['n'])
+                ];
+
+                $payload = $token . '.' . Base64UrlSafeEncoder::encode(hash('sha256', json_encode($header), true));
+
+                return new Challenge($challenge['uri'], $token, $payload);
+            }
+        }
+
+        throw new AcmeHttpChallengeNotSupportedException();
     }
 
     /**
