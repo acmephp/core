@@ -8,3 +8,5 @@ The ACME PHP project aims to implement the ACME protocol in PHP to be able to us
 easily in various projects.
 
 This repository is the core of the project : it is a basis for the other repositories.
+
+![How ACME works?](https://raw.githubusercontent.com/acmephp/core/master/docs/howitworks_challenge.png)
