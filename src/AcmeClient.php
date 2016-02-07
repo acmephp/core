@@ -50,7 +50,7 @@ class AcmeClient
 
     /**
      * @param string $authority ACME certificate authority.
-     * @param string $license ACME certificate authority license URL.
+     * @param string $license   ACME certificate authority license URL.
      * @param $keyPairsDirectory
      * @param LoggerInterface|null $logger
      */
@@ -71,7 +71,7 @@ class AcmeClient
     }
 
     /**
-     * Registering the local account into the Certificate Authority
+     * Registering the local account into the Certificate Authority.
      *
      * @param string|null $email
      *
@@ -84,7 +84,7 @@ class AcmeClient
         $payload['agreement'] = $this->license;
 
         if ($email) {
-            $payload['contact'] = [ 'mailto:'.$email ];
+            $payload['contact'] = ['mailto:'.$email];
         }
 
         $this->log('info', sprintf('Registering account with payload %s', json_encode($payload)));
@@ -103,14 +103,12 @@ class AcmeClient
         $this->log('info', sprintf('Requesting challenge for domain "%s"', $domain));
 
         $response = $this->httpClient->request('/acme/new-authz', [
-            'resource' => 'new-authz',
+            'resource'   => 'new-authz',
             'identifier' => [
-                'type' => 'dns',
+                'type'  => 'dns',
                 'value' => $domain,
             ],
         ]);
-
-
 
         var_dump($response);
         exit;
@@ -119,7 +117,7 @@ class AcmeClient
     /**
      * @param string $level
      * @param string $message
-     * @param array $context
+     * @param array  $context
      */
     private function log($level, $message, array $context = [])
     {

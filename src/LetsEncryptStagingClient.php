@@ -24,10 +24,11 @@ class LetsEncryptStagingClient extends AcmeClient
     const LICENSE = 'https://letsencrypt.org/documents/LE-SA-v1.0.1-July-27-2015.pdf';
 
     /**
-     * @param string $keyPairsDirectory
+     * @param string               $keyPairsDirectory
      * @param LoggerInterface|null $logger
      */
-    public function __construct($keyPairsDirectory, LoggerInterface $logger = null) {
+    public function __construct($keyPairsDirectory, LoggerInterface $logger = null)
+    {
         parent::__construct(self::AUTHORITY, self::LICENSE, $keyPairsDirectory, $logger);
     }
 }

@@ -20,6 +20,7 @@ class Base64UrlSafeEncoder
 {
     /**
      * @param string $input
+     *
      * @return string
      */
     public static function encode($input)
@@ -29,6 +30,7 @@ class Base64UrlSafeEncoder
 
     /**
      * @param string $input
+     *
      * @return string
      */
     public static function decode($input)

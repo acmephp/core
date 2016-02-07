@@ -53,7 +53,7 @@ class KeyPairManagerTest extends UnitTest
      */
     public function testDirectoryNotReadable()
     {
-        new KeyPairManager(__DIR__ . '/../Fixtures/not-readable');
+        new KeyPairManager(__DIR__.'/../Fixtures/not-readable');
     }
 
     /**
@@ -62,6 +62,6 @@ class KeyPairManagerTest extends UnitTest
      */
     public function testDirectoryNotWritable()
     {
-        new KeyPairManager(__DIR__ . '/../Fixtures/not-writable');
+        new KeyPairManager(__DIR__.'/../Fixtures/not-writable');
     }
 }

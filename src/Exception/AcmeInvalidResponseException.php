@@ -39,9 +39,9 @@ class AcmeInvalidResponseException extends \RuntimeException
     private $response;
 
     /**
-     * @param string $requestMethod
-     * @param string $requestUrl
-     * @param array $requestPayload
+     * @param string            $requestMethod
+     * @param string            $requestUrl
+     * @param array             $requestPayload
      * @param ResponseInterface $response
      */
     public function __construct($requestMethod, $requestUrl, array $requestPayload, ResponseInterface $response)

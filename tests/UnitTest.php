@@ -20,9 +20,9 @@ abstract class UnitTest extends \PHPUnit_Framework_TestCase
 {
     protected function makeTempDir()
     {
-        $basePath = $this->getTempDir() . '/' . $this->getName();
+        $basePath = $this->getTempDir().'/'.$this->getName();
 
-        while (false === @mkdir($tempDir = $basePath . rand(10000, 99999), 0777, true)) {
+        while (false === @mkdir($tempDir = $basePath.rand(10000, 99999), 0777, true)) {
             // Run until we are able to create a directory
         }
 
@@ -39,6 +39,6 @@ abstract class UnitTest extends \PHPUnit_Framework_TestCase
     {
         // str_replace('\\', '/', realpath(sys_get_temp_dir()));
 
-        return __DIR__ . '/Fixtures/tmp';
+        return __DIR__.'/Fixtures/tmp';
     }
 }
