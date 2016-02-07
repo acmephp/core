@@ -57,9 +57,9 @@ class SecureHttpClient
      *
      * @param string $method
      * @param string $endpoint
-     * @param array $payload
-     * @return array If the server returns an invalid response.
+     * @param array  $payload
      *
+     * @return array If the server returns an invalid response.
      */
     public function request($method, $endpoint, array $payload)
     {

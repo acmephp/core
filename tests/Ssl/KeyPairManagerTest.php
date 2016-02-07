@@ -28,8 +28,8 @@ class KeyPairManagerTest extends UnitTest
     public function testLoadValid()
     {
         $keyPair = KeyPairManager::load(
-            $this->getFixturesDir() . '/account/public.pem',
-            $this->getFixturesDir() . '/account/private.pem'
+            $this->getFixturesDir().'/account/public.pem',
+            $this->getFixturesDir().'/account/private.pem'
         );
 
         $this->assertInstanceOf(KeyPair::class, $keyPair);
@@ -41,8 +41,8 @@ class KeyPairManagerTest extends UnitTest
     public function testLoadInvalidPublic()
     {
         KeyPairManager::load(
-            $this->getFixturesDir() . '/account/invalid-public.pem',
-            $this->getFixturesDir() . '/account/private.pem'
+            $this->getFixturesDir().'/account/invalid-public.pem',
+            $this->getFixturesDir().'/account/private.pem'
         );
     }
 
@@ -52,8 +52,8 @@ class KeyPairManagerTest extends UnitTest
     public function testLoadInvalidPrivate()
     {
         KeyPairManager::load(
-            $this->getFixturesDir() . '/account/public.pem',
-            $this->getFixturesDir() . '/account/invaid-private.pem'
+            $this->getFixturesDir().'/account/public.pem',
+            $this->getFixturesDir().'/account/invaid-private.pem'
         );
     }
 }

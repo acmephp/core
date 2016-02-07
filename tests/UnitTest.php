@@ -42,6 +42,6 @@ abstract class UnitTest extends \PHPUnit_Framework_TestCase
 
     protected function getFixturesDir()
     {
-        return __DIR__ . '/Fixtures';
+        return __DIR__.'/Fixtures';
     }
 }

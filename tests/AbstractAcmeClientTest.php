@@ -128,7 +128,6 @@ abstract class AbstractAcmeClientTest extends UnitTest
         $this->client->registerAccount('tgalopin@example.com');
     }
 
-
     /*
      * Request challenge
      */
@@ -148,7 +147,6 @@ abstract class AbstractAcmeClientTest extends UnitTest
 
         $this->assertInstanceOf(Challenge::class, $challenge);
     }
-
 
     /*
      * Full scenario

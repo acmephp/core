@@ -181,14 +181,14 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
         $this->log(LogLevel::DEBUG, sprintf('Requesting challenge for domain %s ...', $domain));
 
         $response = $this->httpClient->request('POST', '/acme/new-authz', [
-            'resource' => 'new-authz',
+            'resource'   => 'new-authz',
             'identifier' => [
-                'type' => 'dns',
+                'type'  => 'dns',
                 'value' => $domain,
             ],
         ]);
 
-        if (! isset($response['challenges']) || 0 === count($response['challenges'])) {
+        if (!isset($response['challenges']) || 0 === count($response['challenges'])) {
             throw new AcmeChallengeNotSupportedException();
         }
 
@@ -200,12 +200,12 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
 
                 $header = [
                     // This order matters
-                    'e' => Base64UrlSafeEncoder::encode($accountKeyDetails['rsa']['e']),
+                    'e'   => Base64UrlSafeEncoder::encode($accountKeyDetails['rsa']['e']),
                     'kty' => 'RSA',
-                    'n' => Base64UrlSafeEncoder::encode($accountKeyDetails['rsa']['n'])
+                    'n'   => Base64UrlSafeEncoder::encode($accountKeyDetails['rsa']['n']),
                 ];
 
-                $payload = $token . '.' . Base64UrlSafeEncoder::encode(hash('sha256', json_encode($header), true));
+                $payload = $token.'.'.Base64UrlSafeEncoder::encode(hash('sha256', json_encode($header), true));
                 $location = $this->httpClient->getLastLocation();
 
                 return new Challenge($domain, $challenge['uri'], $token, $payload, $location);
@@ -230,10 +230,10 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
         ));
 
         $payload = [
-            'resource' => 'challenge',
-            'type' => 'http-01',
+            'resource'         => 'challenge',
+            'type'             => 'http-01',
             'keyAuthorization' => $challenge->getPayload(),
-            'token' => $challenge->getToken(),
+            'token'            => $challenge->getToken(),
         ];
 
         $response = $this->httpClient->request('POST', $challenge->getUrl(), $payload);

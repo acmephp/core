@@ -11,8 +11,6 @@
 
 namespace AcmePhp\Core\Ssl\Exception;
 
-use AcmePhp\Core\Exception\AcmePhpException;
-
 /**
  * Generating of a new SSL key failed.
  *
