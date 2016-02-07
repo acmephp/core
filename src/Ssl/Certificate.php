@@ -46,11 +46,11 @@ class Certificate
     private $chain;
 
     /**
-     * @param string $domain
+     * @param string  $domain
      * @param KeyPair $domainKeyPair
-     * @param string $fullchain
-     * @param string $cert
-     * @param string $chain
+     * @param string  $fullchain
+     * @param string  $cert
+     * @param string  $chain
      */
     public function __construct($domain, KeyPair $domainKeyPair, $fullchain, $cert, $chain)
     {

@@ -19,7 +19,7 @@ namespace AcmePhp\Core;
 class LetsEncryptStagingClient extends LetsEncryptClient
 {
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     protected function getCABaseUrl()
     {

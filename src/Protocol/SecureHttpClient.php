@@ -58,9 +58,9 @@ class SecureHttpClient
      * @param string $endpoint
      * @param array  $payload
      *
-     * @return array
-     *
      * @throws AcmeInvalidResponseException If the server returns an invalid response.
+     *
+     * @return array
      */
     public function request($endpoint, array $payload)
     {

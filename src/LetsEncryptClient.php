@@ -19,7 +19,7 @@ namespace AcmePhp\Core;
 class LetsEncryptClient extends AbstractAcmeClient
 {
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     protected function getCABaseUrl()
     {
@@ -27,7 +27,7 @@ class LetsEncryptClient extends AbstractAcmeClient
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     protected function getCALicense()
     {

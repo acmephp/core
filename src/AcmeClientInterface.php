@@ -11,8 +11,8 @@
 
 namespace AcmePhp\Core;
 
-use AcmePhp\Core\Ssl\Certificate;
 use AcmePhp\Core\Protocol\Challenge;
+use AcmePhp\Core\Ssl\Certificate;
 use AcmePhp\Core\Ssl\KeyPair;
 
 /**
@@ -71,9 +71,9 @@ interface AcmeClientInterface
      * operation could be long.
      *
      * @param Challenge $challenge The challenge data to check.
-     * @param integer $timeout The timeout period.
+     * @param int       $timeout   The timeout period.
      *
-     * @return boolean Whether the challenge was successfully checked or not.
+     * @return bool Whether the challenge was successfully checked or not.
      */
     public function checkChallenge(Challenge $challenge, $timeout = 180);
 
@@ -87,9 +87,9 @@ interface AcmeClientInterface
      * wait for the Certificate Authority to validate the certificate and
      * this operation could be long.
      *
-     * @param string $domain The domain to request a certificate for.
+     * @param string  $domain        The domain to request a certificate for.
      * @param KeyPair $domainKeyPair The domain SSL KeyPair to use (for renewal).
-     * @param integer $timeout The timeout period.
+     * @param int     $timeout       The timeout period.
      *
      * @return Certificate The certificate data to save somewhere you want.
      */

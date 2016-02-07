@@ -38,7 +38,7 @@ abstract class AbstractAcmeClientTest extends UnitTest
     protected $client;
 
     /**
-     * @param KeyPair $accountKeyPair
+     * @param KeyPair              $accountKeyPair
      * @param LoggerInterface|null $logger
      *
      * @return AbstractAcmeClient

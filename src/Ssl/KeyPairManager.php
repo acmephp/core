@@ -24,12 +24,12 @@ class KeyPairManager
     /**
      * Load a KeyPair.
      *
-     * @param string $publicKeyFile The path to the public key file.
+     * @param string $publicKeyFile  The path to the public key file.
      * @param string $privateKeyFile The path to the private key file.
      *
-     * @return KeyPair
-     *
      * @throws LoadingSslKeyFailedException If OpenSSL failed to load the keys.
+     *
+     * @return KeyPair
      */
     public function loadKeyPair($publicKeyFile, $privateKeyFile)
     {
@@ -39,12 +39,12 @@ class KeyPairManager
     /**
      * Load a KeyPair.
      *
-     * @param string $publicKeyFile The path to the public key file.
+     * @param string $publicKeyFile  The path to the public key file.
      * @param string $privateKeyFile The path to the private key file.
      *
-     * @return KeyPair
-     *
      * @throws LoadingSslKeyFailedException If OpenSSL failed to load the keys.
+     *
+     * @return KeyPair
      */
     public static function load($publicKeyFile, $privateKeyFile)
     {
@@ -70,9 +70,9 @@ class KeyPairManager
     /**
      * Geenrate a KeyPair.
      *
-     * @return KeyPair
-     *
      * @throws GeneratingSslKeyFailedException If OpenSSL failed to generate keys.
+     *
+     * @return KeyPair
      */
     public function generateKeyPair()
     {
@@ -82,15 +82,15 @@ class KeyPairManager
     /**
      * Geenrate a KeyPair.
      *
-     * @return KeyPair
-     *
      * @throws GeneratingSslKeyFailedException If OpenSSL failed to generate keys.
+     *
+     * @return KeyPair
      */
     public static function generate()
     {
         $key = openssl_pkey_new([
             'private_key_type' => OPENSSL_KEYTYPE_RSA,
-            'private_key_bits' => 4096
+            'private_key_bits' => 4096,
         ]);
 
         if (!openssl_pkey_export($key, $privateKey)) {

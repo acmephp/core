@@ -13,10 +13,10 @@ namespace AcmePhp\Core;
 
 use AcmePhp\Core\Exception\AccountKeyPairMissingException;
 use AcmePhp\Core\Protocol\Challenge;
+use AcmePhp\Core\Protocol\SecureHttpClient;
 use AcmePhp\Core\Ssl\Certificate;
 use AcmePhp\Core\Ssl\Exception\LoadingSslKeyFailedException;
 use AcmePhp\Core\Ssl\KeyPair;
-use AcmePhp\Core\Protocol\SecureHttpClient;
 use Psr\Log\LoggerInterface;
 use Webmozart\Assert\Assert;
 
@@ -59,7 +59,7 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
     /**
      * Create the client.
      *
-     * @param KeyPair $accountKeyPair The account KeyPair to use for dialog with the Certificate Authority.
+     * @param KeyPair              $accountKeyPair The account KeyPair to use for dialog with the Certificate Authority.
      * @param LoggerInterface|null $logger
      *
      * @throws LoadingSslKeyFailedException If the provided account keys can not be loaded by OpenSSL.
@@ -74,7 +74,7 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function useAccountKeyPair(KeyPair $keyPair)
     {
@@ -83,7 +83,7 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function registerAccount($email = null)
     {
@@ -97,7 +97,7 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function requestChallenge($domain)
     {
@@ -111,7 +111,7 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function checkChallenge(Challenge $challenge, $timeout = 180)
     {
@@ -125,7 +125,7 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function requestCertificate($domain, KeyPair $domainKeyPair, $timeout = 180)
     {
@@ -171,9 +171,9 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
 
     /**
      * @param Challenge $challenge The challenge data to check.
-     * @param integer $timeout The timeout period.
+     * @param int       $timeout   The timeout period.
      *
-     * @return boolean Whether the challenge was successfully checked or not.
+     * @return bool Whether the challenge was successfully checked or not.
      */
     protected function doCheckChallenge($challenge, $timeout)
     {
@@ -181,9 +181,9 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
     }
 
     /**
-     * @param string $domain The domain to request a certificate for.
+     * @param string  $domain        The domain to request a certificate for.
      * @param KeyPair $domainKeyPair The domain SSL KeyPair to use (for renewal).
-     * @param integer $timeout The timeout period.
+     * @param int     $timeout       The timeout period.
      *
      * @return Certificate The certificate data to save somewhere you want.
      */
