@@ -13,11 +13,14 @@ namespace AcmePhp\Core;
 
 use AcmePhp\Core\Exception\AccountKeyPairMissingException;
 use AcmePhp\Core\Protocol\Challenge;
+use AcmePhp\Core\Protocol\Exception\AcmeChallengeNotSupportedException;
 use AcmePhp\Core\Protocol\SecureHttpClient;
 use AcmePhp\Core\Ssl\Certificate;
 use AcmePhp\Core\Ssl\Exception\LoadingSslKeyFailedException;
 use AcmePhp\Core\Ssl\KeyPair;
+use AcmePhp\Core\Util\Base64UrlSafeEncoder;
 use Psr\Log\LoggerInterface;
+use Psr\Log\LogLevel;
 use Webmozart\Assert\Assert;
 
 /**
@@ -156,7 +159,13 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
             $payload['contact'] = ['mailto:'.$email];
         }
 
-        return $this->httpClient->request('/acme/new-reg', $payload);
+        $this->log(LogLevel::DEBUG, sprintf('Registering account with payload %s ...', json_encode($payload)));
+
+        $response = $this->httpClient->request('/acme/new-reg', $payload);
+
+        $this->log(LogLevel::DEBUG, 'Account registered');
+
+        return $response;
     }
 
     /**
@@ -166,7 +175,43 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
      */
     protected function doRequestChallenge($domain)
     {
-        // TODO
+        $privateAccountKey = $this->accountKeyPair->getPrivateKey();
+        $accountKeyDetails = openssl_pkey_get_details($privateAccountKey);
+
+        $this->log(LogLevel::DEBUG, sprintf('Requesting challenge for domain %s ...', $domain));
+
+        $response = $this->httpClient->request('/acme/new-authz', [
+            'resource'   => 'new-authz',
+            'identifier' => [
+                'type'  => 'dns',
+                'value' => $domain,
+            ],
+        ]);
+
+        if (! isset($response['challenges']) || 0 === count($response['challenges'])) {
+            throw new AcmeChallengeNotSupportedException();
+        }
+
+        foreach ($response['challenges'] as $challenge) {
+            if ('http-01' === $challenge['type']) {
+                $token = $challenge['token'];
+
+                $header = [
+                    // This order matters
+                    'e' => Base64UrlSafeEncoder::encode($accountKeyDetails['rsa']['e']),
+                    'kty' => 'RSA',
+                    'n' => Base64UrlSafeEncoder::encode($accountKeyDetails['rsa']['n'])
+                ];
+
+                $payload = $token . '.' . Base64UrlSafeEncoder::encode(hash('sha256', json_encode($header), true));
+
+                $this->log(LogLevel::DEBUG, sprintf('Challenge data successfully found: %s', $token));
+
+                return new Challenge($domain, $challenge['uri'], $token, $payload);
+            }
+        }
+
+        throw new AcmeChallengeNotSupportedException();
     }
 
     /**

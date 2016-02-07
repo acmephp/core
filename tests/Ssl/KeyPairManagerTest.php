@@ -20,39 +20,40 @@ use AcmePhp\Core\Tests\UnitTest;
  */
 class KeyPairManagerTest extends UnitTest
 {
-    public function testGenerateLoadValid()
+    public function testGenerate()
     {
-        $dir = $this->makeTempDir();
+        $this->assertInstanceOf(KeyPair::class, KeyPairManager::generate());
+    }
 
-        $manager = new KeyPairManager($dir);
+    public function testLoadValid()
+    {
+        $keyPair = KeyPairManager::load(
+            $this->getFixturesDir() . '/account/public.pem',
+            $this->getFixturesDir() . '/account/private.pem'
+        );
 
-        $generated = $manager->generate('valid');
-        $loaded = $manager->load('valid');
-
-        $this->assertInstanceOf(KeyPair::class, $generated);
-        $this->assertInstanceOf(KeyPair::class, $loaded);
-        $this->assertSame($generated->getName(), $loaded->getName());
-        $this->assertInternalType('resource', $generated->getPrivateKey());
-        $this->assertInternalType('resource', $generated->getPublicKey());
-        $this->assertInternalType('resource', $loaded->getPrivateKey());
-        $this->assertInternalType('resource', $loaded->getPublicKey());
-
-        $this->clearTempDir();
+        $this->assertInstanceOf(KeyPair::class, $keyPair);
     }
 
     /**
-     * @expectedException \InvalidArgumentException
+     * @expectedException \AcmePhp\Core\Ssl\Exception\LoadingSslKeyFailedException
      */
-    public function testDirectoryInvalid()
+    public function testLoadInvalidPublic()
     {
-        new KeyPairManager(new \stdClass());
+        KeyPairManager::load(
+            $this->getFixturesDir() . '/account/invalid-public.pem',
+            $this->getFixturesDir() . '/account/private.pem'
+        );
     }
 
     /**
-     * @expectedException \InvalidArgumentException
+     * @expectedException \AcmePhp\Core\Ssl\Exception\LoadingSslKeyFailedException
      */
-    public function testDirectoryNotReadable()
+    public function testLoadInvalidPrivate()
     {
-        new KeyPairManager(__DIR__.'/invalid');
+        KeyPairManager::load(
+            $this->getFixturesDir() . '/account/public.pem',
+            $this->getFixturesDir() . '/account/invaid-private.pem'
+        );
     }
 }

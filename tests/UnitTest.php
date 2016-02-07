@@ -39,4 +39,9 @@ abstract class UnitTest extends \PHPUnit_Framework_TestCase
     {
         return str_replace('\\', '/', realpath(sys_get_temp_dir())).'/acme-php';
     }
+
+    protected function getFixturesDir()
+    {
+        return __DIR__ . '/Fixtures';
+    }
 }

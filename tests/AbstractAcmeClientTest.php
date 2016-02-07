@@ -12,6 +12,7 @@
 namespace AcmePhp\Core\Tests;
 
 use AcmePhp\Core\AbstractAcmeClient;
+use AcmePhp\Core\Protocol\Challenge;
 use AcmePhp\Core\Ssl\KeyPair;
 use AcmePhp\Core\Ssl\KeyPairManager;
 use AcmePhp\Core\Tests\Mock\ArrayLogger;
@@ -65,6 +66,10 @@ abstract class AbstractAcmeClientTest extends UnitTest
         $this->client = null;
     }
 
+    /*
+     * Register account
+     */
+
     public function testRegisterAccountWithoutEmail()
     {
         $this->assertCount(0, $this->logger->getMessages());
@@ -77,7 +82,7 @@ abstract class AbstractAcmeClientTest extends UnitTest
         $this->assertArrayHasKey('initialIp', $response);
         $this->assertArrayHasKey('createdAt', $response);
 
-        $this->assertCount(1, $this->logger->getMessages());
+        $this->assertCount(2, $this->logger->getMessages());
     }
 
     public function testRegisterAccountWithEmail()
@@ -95,14 +100,30 @@ abstract class AbstractAcmeClientTest extends UnitTest
         $this->assertArrayHasKey(0, $response['contact']);
         $this->assertSame('mailto:tgalopin@example.com', $response['contact'][0]);
 
-        $this->assertCount(1, $this->logger->getMessages());
+        $this->assertCount(2, $this->logger->getMessages());
     }
 
+    /**
+     * @expectedException \GuzzleHttp\Exception\ClientException
+     */
     public function testRequestChallengeWithoutRegistration()
     {
-        $this->setExpectedExceptionRegExp(ClientException::class, '~403~');
         $this->client->requestChallenge('example.com');
     }
+
+    /**
+     * @expectedException \GuzzleHttp\Exception\ClientException
+     */
+    public function testRegisterAccountTwice()
+    {
+        $this->client->registerAccount('tgalopin@example.com');
+        $this->client->registerAccount('tgalopin@example.com');
+    }
+
+
+    /*
+     * Request challenge
+     */
 
     public function testRequestChallengeWithRegistration()
     {

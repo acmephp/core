@@ -11,6 +11,7 @@
 
 namespace AcmePhp\Core\Ssl;
 
+use AcmePhp\Core\Ssl\Exception\AcmeSslException;
 use Webmozart\Assert\Assert;
 
 /**
@@ -54,10 +55,35 @@ class KeyPair
     }
 
     /**
+     * @return string
+     */
+    public function getPublicKeyAsPEM()
+    {
+        $details = openssl_pkey_get_details($this->getPrivateKey());
+
+        return $details['key'];
+    }
+
+    /**
      * @return resource
      */
     public function getPrivateKey()
     {
         return $this->privateKey;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPrivateKeyAsPEM()
+    {
+        if (!openssl_pkey_export($this->getPrivateKey(), $privateKey)) {
+            throw new AcmeSslException(sprintf(
+                'OpenSSL key export failed during generation with error: %s',
+                openssl_error_string()
+            ));
+        }
+
+        return $privateKey;
     }
 }

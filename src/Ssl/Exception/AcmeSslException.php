@@ -14,10 +14,8 @@ namespace AcmePhp\Core\Ssl\Exception;
 use AcmePhp\Core\Exception\AcmePhpException;
 
 /**
- * Generating of a new SSL key failed.
- *
  * @author Titouan Galopin <galopintitouan@gmail.com>
  */
-class GeneratingSslKeyFailedException extends AcmeSslException
+class AcmeSslException extends AcmePhpException
 {
 }

@@ -11,14 +11,12 @@
 
 namespace AcmePhp\Core\Ssl\Exception;
 
-use AcmePhp\Core\Exception\AcmePhpException;
-
 /**
  * Loading of a SSL key failed.
  *
  * @author Titouan Galopin <galopintitouan@gmail.com>
  */
-class LoadingSslKeyFailedException extends AcmePhpException
+class LoadingSslKeyFailedException extends AcmeSslException
 {
     /**
      * @var string
@@ -28,23 +26,23 @@ class LoadingSslKeyFailedException extends AcmePhpException
     /**
      * @var string
      */
-    private $file;
+    private $keyFile;
 
     /**
      * @param string $type
-     * @param string $file
+     * @param string $keyFile
      * @param string $message
      */
-    public function __construct($type, $file, $message)
+    public function __construct($type, $keyFile, $message)
     {
         parent::__construct(sprintf(
             'Reading of the %s key file "%s" failed with message: %s',
             $type,
-            $file,
+            $keyFile,
             $message
         ));
 
         $this->type = $type;
-        $this->file = $file;
+        $this->keyFile = $keyFile;
     }
 }

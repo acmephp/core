@@ -23,6 +23,6 @@ class LetsEncryptStagingClient extends LetsEncryptClient
      */
     protected function getCABaseUrl()
     {
-        return 'hhttps://acme-staging.api.letsencrypt.org';
+        return 'https://acme-staging.api.letsencrypt.org';
     }
 }
