@@ -37,6 +37,6 @@ abstract class UnitTest extends \PHPUnit_Framework_TestCase
 
     protected function getTempDir()
     {
-        return str_replace('\\', '/', realpath(sys_get_temp_dir()));
+        return str_replace('\\', '/', realpath(sys_get_temp_dir())) . '/acme-php';
     }
 }
