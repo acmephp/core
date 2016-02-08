@@ -159,7 +159,7 @@ abstract class AbstractAcmeClientTest extends UnitTest
         $challenge = $this->client->requestChallenge('example.com');
         $this->assertInstanceOf(Challenge::class, $challenge);
 
-        // This will failas we don't have a server to test it properly
+        // This will fail as we don't have a server to test it properly
         $this->assertFalse($this->client->checkChallenge($challenge));
 
         // This should not issue a certificate

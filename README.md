@@ -2,6 +2,7 @@ Acme PHP Core
 =============
 
 [![Build Status](https://travis-ci.org/acmephp/core.svg?branch=master)](https://travis-ci.org/acmephp/core)
+[![StyleCI](https://styleci.io/repos/51226077/shield)](https://styleci.io/repos/51226077)
 
 > Note : this repository is in development
 
