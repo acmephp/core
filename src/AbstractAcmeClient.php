@@ -126,7 +126,7 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
 
         Assert::integer($timeout, 'checkChallenge::$timeout expected an integer. Got: %s');
 
-        return $this->doCheckChallenge($challenge, $timeout);
+        $this->doCheckChallenge($challenge, $timeout);
     }
 
     /**

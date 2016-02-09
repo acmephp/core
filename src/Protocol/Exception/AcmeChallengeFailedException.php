@@ -20,6 +20,21 @@ class AcmeChallengeFailedException extends AcmeProtocolException
 {
     public function __construct(array $response)
     {
-        parent::__construct(sprintf('Check challenge failed (body: %s)', json_encode($response)));
+        $message = sprintf('Challenge check failed (response: %s)', json_encode($response));
+
+        if (isset($response['challenges'])) {
+            foreach ($response['challenges'] as $challenge) {
+                if ('http-01' === $challenge['type'] && isset($challenge['error']['detail'])) {
+                    $message = sprintf(
+                        'Challenge check failed with message "%s"' . PHP_EOL .
+                        'Full response:' . PHP_EOL . '%s',
+                        $challenge['error']['detail'],
+                        json_encode($response)
+                    );
+                }
+            }
+        }
+
+        parent::__construct($message, 400);
     }
 }
