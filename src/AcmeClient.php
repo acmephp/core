@@ -1,0 +1,68 @@
+<?php
+
+/*
+ * This file is part of the ACME PHP library.
+ *
+ * (c) Titouan Galopin <galopintitouan@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace AcmePhp\Core;
+
+use AcmePhp\Core\Ssl\Exception\LoadingSslKeyFailedException;
+use AcmePhp\Core\Ssl\KeyPair;
+use Psr\Log\LoggerInterface;
+
+/**
+ * ACME generic client.
+ *
+ * @author Titouan Galopin <galopintitouan@gmail.com>
+ */
+class AcmeClient extends AbstractAcmeClient
+{
+    /**
+     * @var string
+     */
+    private $caBaseUrl;
+
+    /**
+     * @var string
+     */
+    private $caLicense;
+
+    /**
+     * Create the client.
+     *
+     * @param string               $caBaseUrl The Certificate Authority base URL.
+     * @param string               $caLicense The Certificate Authority license document URL.
+     * @param KeyPair              $accountKeyPair The account KeyPair to use for dialog with the Certificate Authority.
+     * @param LoggerInterface|null $logger
+     *
+     * @throws LoadingSslKeyFailedException If the provided account keys can not be loaded by OpenSSL.
+     */
+    public function __construct($caBaseUrl, $caLicense, KeyPair $accountKeyPair = null, LoggerInterface $logger = null)
+    {
+        parent::__construct($logger, $accountKeyPair);
+
+        $this->caBaseUrl = $caBaseUrl;
+        $this->caLicense = $caLicense;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function getCABaseUrl()
+    {
+        return $this->caBaseUrl;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function getCALicense()
+    {
+        return $this->caLicense;
+    }
+}

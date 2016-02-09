@@ -13,7 +13,9 @@ namespace AcmePhp\Core;
 
 use AcmePhp\Core\Exception\AccountKeyPairMissingException;
 use AcmePhp\Core\Protocol\Challenge;
+use AcmePhp\Core\Protocol\Exception\AcmeChallengeFailedException;
 use AcmePhp\Core\Protocol\Exception\AcmeChallengeNotSupportedException;
+use AcmePhp\Core\Protocol\Exception\AcmeChallengeTimedOutException;
 use AcmePhp\Core\Protocol\SecureHttpClient;
 use AcmePhp\Core\Ssl\Certificate;
 use AcmePhp\Core\Ssl\Exception\LoadingSslKeyFailedException;
@@ -143,11 +145,7 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
     }
 
     /**
-     * @param string|null $email An optionnal e-mail to associate with the
-     *                           account.
-     *
-     * @return array The Certificate Authority response decoded from JSON into
-     *               an array.
+     * @see requestAccount()
      */
     protected function doRegisterAccount($email)
     {
@@ -163,15 +161,14 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
 
         $response = $this->httpClient->request('POST', '/acme/new-reg', $payload);
 
-        $this->log(LogLevel::DEBUG, 'Account registered');
+        $this->log(LogLevel::INFO, 'Account registered');
 
         return $response;
     }
 
+
     /**
-     * @param string $domain The domain to challenge.
-     *
-     * @return Challenge The data returned by the Certificate Authority.
+     * @see requestChallenge()
      */
     protected function doRequestChallenge($domain)
     {
@@ -196,7 +193,7 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
             if ('http-01' === $challenge['type']) {
                 $token = $challenge['token'];
 
-                $this->log(LogLevel::DEBUG, sprintf('Challenge data successfully found: %s', $token));
+                $this->log(LogLevel::INFO, sprintf('Challenge data successfully found: %s', $token));
 
                 $header = [
                     // This order matters
@@ -216,10 +213,7 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
     }
 
     /**
-     * @param Challenge $challenge The challenge data to check.
-     * @param int       $timeout   The timeout period.
-     *
-     * @return bool Whether the challenge was successfully checked or not.
+     * @see checkChallenge()
      */
     protected function doCheckChallenge($challenge, $timeout)
     {
@@ -239,9 +233,7 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
         $response = $this->httpClient->request('POST', $challenge->getUrl(), $payload);
 
         if (empty($response['status']) || 'invalid' === $response['status']) {
-            $this->log(LogLevel::ERROR, sprintf('Check challenge failed (body: %s)', json_encode($response)));
-
-            return false;
+            throw new AcmeChallengeFailedException($response);
         }
 
         // Waiting loop
@@ -251,9 +243,7 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
             $response = $this->httpClient->request('GET', $challenge->getLocation(), []);
 
             if (empty($response['status']) || 'invalid' === $response['status']) {
-                $this->log(LogLevel::ERROR, sprintf('Check challenge failed (body: %s)', json_encode($response)));
-
-                return false;
+                throw new AcmeChallengeFailedException($response);
             }
 
             if ('pending' !== $response['status']) {
@@ -265,22 +255,14 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
         }
 
         if ('pending' === $response['status']) {
-            $this->log(LogLevel::ERROR, sprintf('Check challenge request timed out (body: %s)', json_encode($response)));
-
-            return false;
+            throw new AcmeChallengeTimedOutException($response);
         }
 
-        $this->log(LogLevel::ERROR, sprintf('Check challenge request succeded (body: %s)', json_encode($response)));
-
-        return true;
+        $this->log(LogLevel::INFO, sprintf('Check challenge request succeded (body: %s)', json_encode($response)));
     }
 
     /**
-     * @param string  $domain        The domain to request a certificate for.
-     * @param KeyPair $domainKeyPair The domain SSL KeyPair to use (for renewal).
-     * @param int     $timeout       The timeout period.
-     *
-     * @return Certificate The certificate data to save somewhere you want.
+     * @see requestCertificate()
      */
     protected function doRequestCertificate($domain, KeyPair $domainKeyPair, $timeout)
     {
@@ -288,6 +270,8 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
     }
 
     /**
+     * Log a message into the logger if there is one.
+     *
      * @param string $level
      * @param string $message
      * @param array  $context

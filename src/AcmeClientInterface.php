@@ -12,6 +12,10 @@
 namespace AcmePhp\Core;
 
 use AcmePhp\Core\Protocol\Challenge;
+use AcmePhp\Core\Protocol\Exception\AcmeChallengeFailedException;
+use AcmePhp\Core\Protocol\Exception\AcmeChallengeNotSupportedException;
+use AcmePhp\Core\Protocol\Exception\AcmeChallengeTimedOutException;
+use AcmePhp\Core\Protocol\Exception\AcmeHttpErrorException;
 use AcmePhp\Core\Ssl\Certificate;
 use AcmePhp\Core\Ssl\KeyPair;
 
@@ -42,6 +46,8 @@ interface AcmeClientInterface
      *
      * @return array The Certificate Authority response decoded from JSON into
      *               an array.
+     *
+     * @throws AcmeHttpErrorException When the ACME server returns an error HTTP status code.
      */
     public function registerAccount($email = null);
 
@@ -56,6 +62,9 @@ interface AcmeClientInterface
      * @param string $domain The domain to challenge.
      *
      * @return Challenge The data returned by the Certificate Authority.
+     *
+     * @throws AcmeChallengeNotSupportedException When the HTTP challenge is not supported by the server.
+     * @throws AcmeHttpErrorException When the ACME server returns an error HTTP status code.
      */
     public function requestChallenge($domain);
 
@@ -73,7 +82,9 @@ interface AcmeClientInterface
      * @param Challenge $challenge The challenge data to check.
      * @param int       $timeout   The timeout period.
      *
-     * @return bool Whether the challenge was successfully checked or not.
+     * @throws AcmeChallengeFailedException When the challenge failed.
+     * @throws AcmeChallengeTimedOutException When the challenge timed out.
+     * @throws AcmeHttpErrorException When the ACME server returns an error HTTP status code.
      */
     public function checkChallenge(Challenge $challenge, $timeout = 180);
 
@@ -92,6 +103,8 @@ interface AcmeClientInterface
      * @param int     $timeout       The timeout period.
      *
      * @return Certificate The certificate data to save somewhere you want.
+     *
+     * @throws AcmeHttpErrorException When the ACME server returns an error HTTP status code.
      */
     public function requestCertificate($domain, KeyPair $domainKeyPair, $timeout = 180);
 }

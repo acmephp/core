@@ -11,6 +11,7 @@
 
 namespace AcmePhp\Core\Protocol;
 
+use AcmePhp\Core\Protocol\Exception\AcmeHttpErrorException;
 use AcmePhp\Core\Protocol\Exception\AcmeInvalidResponseException;
 use AcmePhp\Core\Ssl\KeyPair;
 use AcmePhp\Core\Util\Base64UrlSafeEncoder;
@@ -120,6 +121,8 @@ class SecureHttpClient
      * @param array  $data
      *
      * @return ResponseInterface
+     *
+     * @throws AcmeHttpErrorException When the ACME server returns an error HTTP status code.
      */
     private function doRequest($method, $endpoint, array $data = null)
     {
@@ -131,6 +134,12 @@ class SecureHttpClient
             $request = $request->withBody(\GuzzleHttp\Psr7\stream_for(json_encode($data)));
         }
 
-        return $this->httpClient->send($request);
+        try {
+            $response = $this->httpClient->send($request);
+        } catch (\Exception $exception) {
+            throw new AcmeHttpErrorException($request, $exception);
+        }
+
+        return $response;
     }
 }
