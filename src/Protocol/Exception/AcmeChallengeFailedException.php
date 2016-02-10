@@ -26,8 +26,8 @@ class AcmeChallengeFailedException extends AcmeProtocolException
             foreach ($response['challenges'] as $challenge) {
                 if ('http-01' === $challenge['type'] && isset($challenge['error']['detail'])) {
                     $message = sprintf(
-                        'Challenge check failed with message "%s"' . PHP_EOL .
-                        'Full response:' . PHP_EOL . '%s',
+                        'Challenge check failed with message "%s"'.PHP_EOL.
+                        'Full response:'.PHP_EOL.'%s',
                         $challenge['error']['detail'],
                         json_encode($response)
                     );

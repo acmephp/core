@@ -84,12 +84,12 @@ class CSR
     public function toArray()
     {
         return [
-            'countryName' => $this->countryName,
-            'stateOrProvinceName' => $this->stateOrProvinceName,
-            'localityName' => $this->localityName,
-            'organizationName' => $this->organizationName,
+            'countryName'            => $this->countryName,
+            'stateOrProvinceName'    => $this->stateOrProvinceName,
+            'localityName'           => $this->localityName,
+            'organizationName'       => $this->organizationName,
             'organizationalUnitName' => $this->organizationalUnitName,
-            'emailAddress' => $this->emailAddress,
+            'emailAddress'           => $this->emailAddress,
         ];
     }
 

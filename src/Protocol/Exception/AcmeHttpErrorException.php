@@ -29,7 +29,7 @@ class AcmeHttpErrorException extends AcmeProtocolException
 
         if ($exception instanceof GuzzleException) {
             $message = 'The ACME server returned an error HTTP status code ';
-            $message .= 'during request to ' . $requestUrl;
+            $message .= 'during request to '.$requestUrl;
 
             if ($exception instanceof RequestException) {
                 $code = $exception->getResponse()->getStatusCode();
@@ -38,18 +38,18 @@ class AcmeHttpErrorException extends AcmeProtocolException
                 $json = @json_decode($body, true);
 
                 if ($json && array_key_exists('detail', $json)) {
-                    $message .= ' (detail: '. $code .' ' . $json['detail'] . ')';
+                    $message .= ' (detail: '.$code.' '.$json['detail'].')';
                 } else {
                     $summary = RequestException::getResponseBodySummary($exception->getResponse());
 
                     if ($summary) {
-                        $message .= ' (response: '. $code .' ' . $summary . ')';
+                        $message .= ' (response: '.$code.' '.$summary.')';
                     }
                 }
             }
         } else {
-            $message = 'An error occured during request to ' . $requestUrl;
-            $message .= '(error: ' . $exception->getMessage() . ')';
+            $message = 'An error occured during request to '.$requestUrl;
+            $message .= '(error: '.$exception->getMessage().')';
         }
 
         parent::__construct($message, $code, $exception);

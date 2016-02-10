@@ -35,8 +35,8 @@ class AcmeClient extends AbstractAcmeClient
     /**
      * Create the client.
      *
-     * @param string               $caBaseUrl The Certificate Authority base URL.
-     * @param string               $caLicense The Certificate Authority license document URL.
+     * @param string               $caBaseUrl      The Certificate Authority base URL.
+     * @param string               $caLicense      The Certificate Authority license document URL.
      * @param KeyPair              $accountKeyPair The account KeyPair to use for dialog with the Certificate Authority.
      * @param LoggerInterface|null $logger
      *

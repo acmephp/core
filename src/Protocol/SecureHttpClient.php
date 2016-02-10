@@ -112,9 +112,9 @@ class SecureHttpClient
      * @param string $endpoint
      * @param array  $data
      *
-     * @return ResponseInterface
-     *
      * @throws AcmeHttpErrorException When the ACME server returns an error HTTP status code.
+     *
+     * @return ResponseInterface
      */
     public function unsignedRequest($method, $endpoint, array $data = null)
     {

@@ -24,8 +24,8 @@ class AcmeCertificateRequestFailedException extends AcmeProtocolException
 
         if (isset($response['error']['detail'])) {
             $message = sprintf(
-                'Challenge check failed with message "%s"' . PHP_EOL .
-                'Full response:' . PHP_EOL . '%s',
+                'Challenge check failed with message "%s"'.PHP_EOL.
+                'Full response:'.PHP_EOL.'%s',
                 $response['error']['detail'],
                 json_encode($response)
             );

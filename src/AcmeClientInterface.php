@@ -45,10 +45,10 @@ interface AcmeClientInterface
      * @param string|null $email An optionnal e-mail to associate with the
      *                           account.
      *
+     * @throws AcmeHttpErrorException When the ACME server returns an error HTTP status code.
+     *
      * @return array The Certificate Authority response decoded from JSON into
      *               an array.
-     *
-     * @throws AcmeHttpErrorException When the ACME server returns an error HTTP status code.
      */
     public function registerAccount($email = null);
 
@@ -62,10 +62,10 @@ interface AcmeClientInterface
      *
      * @param string $domain The domain to challenge.
      *
-     * @return Challenge The data returned by the Certificate Authority.
-     *
      * @throws AcmeChallengeNotSupportedException When the HTTP challenge is not supported by the server.
-     * @throws AcmeHttpErrorException When the ACME server returns an error HTTP status code.
+     * @throws AcmeHttpErrorException             When the ACME server returns an error HTTP status code.
+     *
+     * @return Challenge The data returned by the Certificate Authority.
      */
     public function requestChallenge($domain);
 
@@ -83,9 +83,9 @@ interface AcmeClientInterface
      * @param Challenge $challenge The challenge data to check.
      * @param int       $timeout   The timeout period.
      *
-     * @throws AcmeChallengeFailedException When the challenge failed.
+     * @throws AcmeChallengeFailedException   When the challenge failed.
      * @throws AcmeChallengeTimedOutException When the challenge timed out.
-     * @throws AcmeHttpErrorException When the ACME server returns an error HTTP status code.
+     * @throws AcmeHttpErrorException         When the ACME server returns an error HTTP status code.
      */
     public function checkChallenge(Challenge $challenge, $timeout = 180);
 
@@ -99,12 +99,12 @@ interface AcmeClientInterface
      * wait for the Certificate Authority to validate the certificate and
      * this operation could be long.
      *
-     * @param string $domain The domain to request a certificate for.
+     * @param string  $domain        The domain to request a certificate for.
      * @param KeyPair $domainKeyPair The domain SSL KeyPair to use (for renewal).
-     * @param CSR $csr The Certificate Signing Request (informations for the certificate).
-     * @param int $timeout The timeout period.
-     * @return Certificate The certificate data to save somewhere you want.
+     * @param CSR     $csr           The Certificate Signing Request (informations for the certificate).
+     * @param int     $timeout       The timeout period.
      *
+     * @return Certificate The certificate data to save somewhere you want.
      */
     public function requestCertificate($domain, KeyPair $domainKeyPair, CSR $csr, $timeout = 180);
 }

@@ -170,7 +170,6 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
         return $response;
     }
 
-
     /**
      * @see requestChallenge()
      */
@@ -279,7 +278,7 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
         $csr = openssl_csr_new(
             $csrData,
             $domainKeyPair->getPrivateKey(),
-            [ 'digest_alg' => 'sha256' ]
+            ['digest_alg' => 'sha256']
         );
 
         if (!$csr) {
@@ -294,11 +293,11 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
         $this->log(LogLevel::INFO, 'CSR generated successfully...');
 
         // Certificate
-        $this->log(LogLevel::DEBUG, 'Requesting server a certificate for domain '. $domain .'...');
+        $this->log(LogLevel::DEBUG, 'Requesting server a certificate for domain '.$domain.'...');
 
         $payload = [
             'resource' => 'new-cert',
-            'csr' => $csr,
+            'csr'      => $csr,
         ];
 
         $response = $this->httpClient->request('POST', '/acme/new-cert', $payload);
@@ -330,7 +329,7 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
 
         $body = \GuzzleHttp\Psr7\readline($response->getBody());
         $pem = chunk_split(base64_encode($body), 64, "\n");
-        $pem = "-----BEGIN CERTIFICATE-----\n" . $pem . "-----END CERTIFICATE-----\n";
+        $pem = "-----BEGIN CERTIFICATE-----\n".$pem."-----END CERTIFICATE-----\n";
 
         $this->log(LogLevel::INFO, 'Certificate paarsed successfully');
 

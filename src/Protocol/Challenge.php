@@ -72,16 +72,17 @@ class Challenge
     public function toArray()
     {
         return [
-            'domain' => $this->getDomain(),
-            'url' => $this->getUrl(),
-            'token' => $this->getToken(),
-            'payload' => $this->getPayload(),
+            'domain'   => $this->getDomain(),
+            'url'      => $this->getUrl(),
+            'token'    => $this->getToken(),
+            'payload'  => $this->getPayload(),
             'location' => $this->getLocation(),
         ];
     }
 
     /**
      * @param array $data
+     *
      * @return Challenge
      */
     public static function fromArray(array $data)
