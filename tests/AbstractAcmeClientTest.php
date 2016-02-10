@@ -13,6 +13,7 @@ namespace AcmePhp\Core\Tests;
 
 use AcmePhp\Core\AbstractAcmeClient;
 use AcmePhp\Core\Protocol\Challenge;
+use AcmePhp\Core\Ssl\CSR;
 use AcmePhp\Core\Ssl\KeyPair;
 use AcmePhp\Core\Ssl\KeyPairManager;
 use AcmePhp\Core\Tests\Mock\ArrayLogger;
@@ -163,6 +164,7 @@ abstract class AbstractAcmeClientTest extends UnitTest
         $this->assertFalse($this->client->checkChallenge($challenge));
 
         // This should not issue a certificate
-        $this->assertNull($this->client->requestCertificate('example.com', KeyPairManager::generate(),));
+        $csr = new CSR('FR', 'Ile-de-France', 'Paris', 'Tgalopin', 'Developer', 'galopintitouan@gmail.com');
+        $this->assertNull($this->client->requestCertificate('example.com', KeyPairManager::generate(), $csr));
     }
 }
