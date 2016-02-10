@@ -163,6 +163,6 @@ abstract class AbstractAcmeClientTest extends UnitTest
         $this->assertFalse($this->client->checkChallenge($challenge));
 
         // This should not issue a certificate
-        $this->assertNull($this->client->requestCertificate('example.com', KeyPairManager::generate()));
+        $this->assertNull($this->client->requestCertificate('example.com', KeyPairManager::generate(),));
     }
 }

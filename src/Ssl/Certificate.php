@@ -33,37 +33,21 @@ class Certificate
     /**
      * @var string
      */
-    private $fullchain;
-
-    /**
-     * @var string
-     */
-    private $cert;
-
-    /**
-     * @var string
-     */
-    private $chain;
+    private $pem;
 
     /**
      * @param string  $domain
      * @param KeyPair $domainKeyPair
-     * @param string  $fullchain
-     * @param string  $cert
-     * @param string  $chain
+     * @param string  $pem
      */
-    public function __construct($domain, KeyPair $domainKeyPair, $fullchain, $cert, $chain)
+    public function __construct($domain, KeyPair $domainKeyPair, $pem)
     {
         Assert::stringNotEmpty($domain, 'Certificate::$domain expected a non-empty string. Got: %s');
-        Assert::stringNotEmpty($fullchain, 'Certificate::$fullchain expected a non-empty string. Got: %s');
-        Assert::stringNotEmpty($cert, 'Certificate::$cert expected a non-empty string. Got: %s');
-        Assert::stringNotEmpty($chain, 'Certificate::$chain expected a non-empty string. Got: %s');
+        Assert::stringNotEmpty($pem, 'Certificate::$fullchain expected a non-empty string. Got: %s');
 
         $this->domain = $domain;
         $this->domainKeyPair = $domainKeyPair;
-        $this->fullchain = $fullchain;
-        $this->cert = $cert;
-        $this->chain = $chain;
+        $this->pem = $pem;
     }
 
     /**
@@ -85,24 +69,8 @@ class Certificate
     /**
      * @return string
      */
-    public function getFullchain()
+    public function getPem()
     {
-        return $this->fullchain;
-    }
-
-    /**
-     * @return string
-     */
-    public function getCert()
-    {
-        return $this->cert;
-    }
-
-    /**
-     * @return string
-     */
-    public function getChain()
-    {
-        return $this->chain;
+        return $this->pem;
     }
 }

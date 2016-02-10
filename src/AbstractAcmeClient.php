@@ -13,11 +13,15 @@ namespace AcmePhp\Core;
 
 use AcmePhp\Core\Exception\AccountKeyPairMissingException;
 use AcmePhp\Core\Protocol\Challenge;
+use AcmePhp\Core\Protocol\Exception\AcmeCertificateRequestFailedException;
+use AcmePhp\Core\Protocol\Exception\AcmeCertificateRequestTimedOutException;
 use AcmePhp\Core\Protocol\Exception\AcmeChallengeFailedException;
 use AcmePhp\Core\Protocol\Exception\AcmeChallengeNotSupportedException;
 use AcmePhp\Core\Protocol\Exception\AcmeChallengeTimedOutException;
 use AcmePhp\Core\Protocol\SecureHttpClient;
 use AcmePhp\Core\Ssl\Certificate;
+use AcmePhp\Core\Ssl\CSR;
+use AcmePhp\Core\Ssl\Exception\GeneratingCsrFailedException;
 use AcmePhp\Core\Ssl\Exception\LoadingSslKeyFailedException;
 use AcmePhp\Core\Ssl\KeyPair;
 use AcmePhp\Core\Util\Base64UrlSafeEncoder;
@@ -132,7 +136,7 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
     /**
      * {@inheritdoc}
      */
-    public function requestCertificate($domain, KeyPair $domainKeyPair, $timeout = 180)
+    public function requestCertificate($domain, KeyPair $domainKeyPair, CSR $csr, $timeout = 180)
     {
         if (!$this->accountKeyPair) {
             throw new AccountKeyPairMissingException();
@@ -141,7 +145,7 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
         Assert::stringNotEmpty($domain, 'requestCertificate::$domain expected a non-empty string. Got: %s');
         Assert::integer($timeout, 'requestCertificate::$timeout expected an integer. Got: %s');
 
-        return $this->doRequestCertificate($domain, $domainKeyPair, $timeout);
+        return $this->doRequestCertificate($domain, $domainKeyPair, $csr, $timeout);
     }
 
     /**
@@ -264,9 +268,73 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
     /**
      * @see requestCertificate()
      */
-    protected function doRequestCertificate($domain, KeyPair $domainKeyPair, $timeout)
+    protected function doRequestCertificate($domain, KeyPair $domainKeyPair, CSR $csr, $timeout)
     {
-        // TODO
+        $this->log(LogLevel::DEBUG, 'Generating Certificate Signing Request...');
+
+        // CSR
+        $csrData = $csr->toArray();
+        $csrData['commonName'] = $domain;
+
+        $csr = openssl_csr_new(
+            $csrData,
+            $domainKeyPair->getPrivateKey(),
+            [ 'digest_alg' => 'sha256' ]
+        );
+
+        if (!$csr) {
+            throw new GeneratingCsrFailedException(sprintf(
+                'OpenSSL CSR generation failed with error: %s',
+                openssl_error_string()
+            ));
+        }
+
+        openssl_csr_export($csr, $csr);
+
+        $this->log(LogLevel::INFO, 'CSR generated successfully...');
+
+        // Certificate
+        $this->log(LogLevel::DEBUG, 'Requesting server a certificate for domain '. $domain .'...');
+
+        $payload = [
+            'resource' => 'new-cert',
+            'csr' => $csr,
+        ];
+
+        $response = $this->httpClient->request('POST', '/acme/new-cert', $payload);
+        $location = $this->httpClient->getLastLocation();
+
+        // Waiting loop
+        $waitingTime = 0;
+
+        while ($waitingTime < $timeout) {
+            $response = $this->httpClient->unsignedRequest('GET', $location);
+
+            if (200 === $this->httpClient->getLastCode()) {
+                break;
+            }
+
+            if (202 !== $this->httpClient->getLastCode()) {
+                throw new AcmeCertificateRequestFailedException($response);
+            }
+
+            $waitingTime++;
+            sleep(1);
+        }
+
+        if (202 === $this->httpClient->getLastCode()) {
+            throw new AcmeCertificateRequestTimedOutException($response);
+        }
+
+        $this->log(LogLevel::INFO, 'Certificate request succeeded, parsing it...');
+
+        $body = \GuzzleHttp\Psr7\readline($response->getBody());
+        $pem = chunk_split(base64_encode($body), 64, "\n");
+        $pem = "-----BEGIN CERTIFICATE-----\n" . $pem . "-----END CERTIFICATE-----\n";
+
+        $this->log(LogLevel::INFO, 'Certificate paarsed successfully');
+
+        return new Certificate($domain, $domainKeyPair, $pem);
     }
 
     /**

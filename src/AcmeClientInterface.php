@@ -17,6 +17,7 @@ use AcmePhp\Core\Protocol\Exception\AcmeChallengeNotSupportedException;
 use AcmePhp\Core\Protocol\Exception\AcmeChallengeTimedOutException;
 use AcmePhp\Core\Protocol\Exception\AcmeHttpErrorException;
 use AcmePhp\Core\Ssl\Certificate;
+use AcmePhp\Core\Ssl\CSR;
 use AcmePhp\Core\Ssl\KeyPair;
 
 /**
@@ -98,13 +99,12 @@ interface AcmeClientInterface
      * wait for the Certificate Authority to validate the certificate and
      * this operation could be long.
      *
-     * @param string  $domain        The domain to request a certificate for.
+     * @param string $domain The domain to request a certificate for.
      * @param KeyPair $domainKeyPair The domain SSL KeyPair to use (for renewal).
-     * @param int     $timeout       The timeout period.
-     *
+     * @param CSR $csr The Certificate Signing Request (informations for the certificate).
+     * @param int $timeout The timeout period.
      * @return Certificate The certificate data to save somewhere you want.
      *
-     * @throws AcmeHttpErrorException When the ACME server returns an error HTTP status code.
      */
-    public function requestCertificate($domain, KeyPair $domainKeyPair, $timeout = 180);
+    public function requestCertificate($domain, KeyPair $domainKeyPair, CSR $csr, $timeout = 180);
 }

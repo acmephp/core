@@ -96,7 +96,7 @@ class SecureHttpClient
             'signature' => $signature,
         ];
 
-        $this->lastResponse = $this->doRequest($method, $endpoint, $payload);
+        $this->unsignedRequest($method, $endpoint, $payload);
 
         $data = json_decode(\GuzzleHttp\Psr7\readline($this->lastResponse->getBody()), true);
 
@@ -108,14 +108,6 @@ class SecureHttpClient
     }
 
     /**
-     * @return string
-     */
-    public function getLastLocation()
-    {
-        return $this->lastResponse->getHeaderLine('Location');
-    }
-
-    /**
      * @param string $method
      * @param string $endpoint
      * @param array  $data
@@ -124,7 +116,7 @@ class SecureHttpClient
      *
      * @throws AcmeHttpErrorException When the ACME server returns an error HTTP status code.
      */
-    private function doRequest($method, $endpoint, array $data = null)
+    public function unsignedRequest($method, $endpoint, array $data = null)
     {
         $request = new Request($method, $endpoint);
         $request = $request->withHeader('Accept', 'application/json');
@@ -135,11 +127,35 @@ class SecureHttpClient
         }
 
         try {
-            $response = $this->httpClient->send($request);
+            $this->lastResponse = $this->httpClient->send($request);
         } catch (\Exception $exception) {
             throw new AcmeHttpErrorException($request, $exception);
         }
 
-        return $response;
+        return $this->lastResponse;
+    }
+
+    /**
+     * @return int
+     */
+    public function getLastCode()
+    {
+        return $this->lastResponse->getStatusCode();
+    }
+
+    /**
+     * @return string
+     */
+    public function getLastLocation()
+    {
+        return $this->lastResponse->getHeaderLine('Location');
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getLastLink()
+    {
+        return $this->lastResponse->getHeader('Link');
     }
 }
