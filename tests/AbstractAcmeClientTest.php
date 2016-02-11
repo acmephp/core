@@ -13,7 +13,6 @@ namespace AcmePhp\Core\Tests;
 
 use AcmePhp\Core\AbstractAcmeClient;
 use AcmePhp\Core\Protocol\Challenge;
-use AcmePhp\Core\Ssl\CSR;
 use AcmePhp\Core\Ssl\KeyPair;
 use AcmePhp\Core\Ssl\KeyPairManager;
 use AcmePhp\Core\Tests\Mock\ArrayLogger;
@@ -113,7 +112,7 @@ abstract class AbstractAcmeClientTest extends UnitTest
     }
 
     /**
-     * @expectedException \GuzzleHttp\Exception\ClientException
+     * @expectedException \AcmePhp\Core\Protocol\Exception\AcmeHttpErrorException
      */
     public function testRequestChallengeWithoutRegistration()
     {
@@ -121,7 +120,7 @@ abstract class AbstractAcmeClientTest extends UnitTest
     }
 
     /**
-     * @expectedException \GuzzleHttp\Exception\ClientException
+     * @expectedException \AcmePhp\Core\Protocol\Exception\AcmeHttpErrorException
      */
     public function testRegisterAccountTwice()
     {
@@ -149,22 +148,13 @@ abstract class AbstractAcmeClientTest extends UnitTest
         $this->assertInstanceOf(Challenge::class, $challenge);
     }
 
-    /*
-     * Full scenario
+    /**
+     * @expectedException \AcmePhp\Core\Protocol\Exception\AcmeChallengeFailedException
      */
-
-    public function testFullScenario()
+    public function testCheckChallengeFail()
     {
         $this->client->registerAccount();
-
         $challenge = $this->client->requestChallenge('example.com');
-        $this->assertInstanceOf(Challenge::class, $challenge);
-
-        // This will fail as we don't have a server to test it properly
-        $this->assertFalse($this->client->checkChallenge($challenge));
-
-        // This should not issue a certificate
-        $csr = new CSR('FR', 'Ile-de-France', 'Paris', 'Tgalopin', 'Developer', 'galopintitouan@gmail.com');
-        $this->assertNull($this->client->requestCertificate('example.com', KeyPairManager::generate(), $csr));
+        $this->client->checkChallenge($challenge);
     }
 }

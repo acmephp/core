@@ -77,7 +77,7 @@ class SecureHttpClient
         ];
 
         if (!$this->lastResponse) {
-            $this->lastResponse = $this->doRequest('GET', '/directory');
+            $this->lastResponse = $this->unsignedRequest('GET', '/directory');
         }
 
         $protected = $header;
