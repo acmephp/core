@@ -162,14 +162,14 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
         }
 
         $this->log(LogLevel::DEBUG, 'Registering account ...', [
-            'server' => $this->getCABaseUrl(),
+            'server'  => $this->getCABaseUrl(),
             'payload' => $payload,
         ]);
 
         $response = $this->httpClient->request('POST', '/acme/new-reg', $payload);
 
         $this->log(LogLevel::INFO, 'Account registered', [
-            'server' => $this->getCABaseUrl(),
+            'server'  => $this->getCABaseUrl(),
             'payload' => json_encode($payload),
         ]);
 
@@ -215,9 +215,9 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
                 $location = $this->httpClient->getLastLocation();
 
                 $this->log(LogLevel::INFO, 'Challenge data found for domain {domain}', [
-                    'domain' => $domain,
-                    'token' => $token,
-                    'payload' => $payload,
+                    'domain'   => $domain,
+                    'token'    => $token,
+                    'payload'  => $payload,
                     'location' => $location,
                 ]);
 
@@ -317,7 +317,7 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
 
         $this->log(LogLevel::INFO, 'CSR generated successfully', [
             'csrData' => $csrData,
-            'csr' => $csr,
+            'csr'     => $csr,
         ]);
 
         // Certificate
@@ -327,7 +327,7 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
         ];
 
         $this->log(LogLevel::DEBUG, 'Requesting a certificate for domain {domain} ...', [
-            'domain' => $domain,
+            'domain'  => $domain,
             'payload' => $payload,
         ]);
 
@@ -359,8 +359,8 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
         $body = \GuzzleHttp\Psr7\readline($response->getBody());
 
         $this->log(LogLevel::INFO, 'Certificate request succeeded, parsing it ...', [
-            'domain' => $domain,
-            'payload' => $payload,
+            'domain'   => $domain,
+            'payload'  => $payload,
             'response' => $body,
         ]);
 
@@ -368,9 +368,9 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
         $pem = "-----BEGIN CERTIFICATE-----\n".$pem."-----END CERTIFICATE-----\n";
 
         $this->log(LogLevel::INFO, 'Certificate parsed successfully', [
-            'domain' => $domain,
+            'domain'  => $domain,
             'payload' => $payload,
-            'pem' => $pem,
+            'pem'     => $pem,
         ]);
 
         return new Certificate($domain, $domainKeyPair, $pem);
