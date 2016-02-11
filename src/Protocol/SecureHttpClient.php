@@ -98,10 +98,11 @@ class SecureHttpClient
 
         $this->unsignedRequest($method, $endpoint, $payload);
 
-        $data = json_decode(\GuzzleHttp\Psr7\readline($this->lastResponse->getBody()), true);
+        $body = \GuzzleHttp\Psr7\readline($this->lastResponse->getBody());
+        $data = @json_decode($body, true);
 
         if (!$data) {
-            throw new AcmeInvalidResponseException($method, $endpoint, $payload, $this->lastResponse);
+            return $body;
         }
 
         return $data;
