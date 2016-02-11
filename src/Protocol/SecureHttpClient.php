@@ -98,7 +98,7 @@ class SecureHttpClient
 
         $this->unsignedRequest($method, $endpoint, $payload);
 
-        $body = \GuzzleHttp\Psr7\readline($this->lastResponse->getBody());
+        $body = \GuzzleHttp\Psr7\copy_to_string($this->lastResponse->getBody());
         $data = @json_decode($body, true);
 
         if (!$data) {

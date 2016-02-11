@@ -360,7 +360,7 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
             throw new AcmeCertificateRequestTimedOutException($response);
         }
 
-        $body = \GuzzleHttp\Psr7\readline($response->getBody());
+        $body = \GuzzleHttp\Psr7\copy_to_string($response->getBody());
 
         $this->log(LogLevel::INFO, 'Certificate request succeeded, parsing it ...', [
             'domain'   => $domain,

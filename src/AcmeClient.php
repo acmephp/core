@@ -44,7 +44,7 @@ class AcmeClient extends AbstractAcmeClient
      */
     public function __construct($caBaseUrl, $caLicense, KeyPair $accountKeyPair = null, LoggerInterface $logger = null)
     {
-        parent::__construct($logger, $accountKeyPair);
+        parent::__construct($accountKeyPair, $logger);
 
         $this->caBaseUrl = $caBaseUrl;
         $this->caLicense = $caLicense;

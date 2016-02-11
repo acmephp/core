@@ -35,7 +35,7 @@ class AcmeHttpErrorException extends AcmeProtocolException
             if ($exception instanceof RequestException && $exception->getResponse() instanceof ResponseInterface) {
                 $code = $exception->getResponse()->getStatusCode();
 
-                $body = \GuzzleHttp\Psr7\readline($exception->getResponse()->getBody());
+                $body = \GuzzleHttp\Psr7\copy_to_string($exception->getResponse()->getBody());
                 $json = @json_decode($body, true);
 
                 if ($json && array_key_exists('detail', $json)) {
