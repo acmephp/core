@@ -315,6 +315,10 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
 
         openssl_csr_export($csr, $csr);
 
+        $humanText = ['-----BEGIN CERTIFICATE REQUEST-----', '-----END CERTIFICATE REQUEST-----'];
+        $csrContent = trim(str_replace($humanText, '', $csr));
+        $csrContent = trim(Base64UrlSafeEncoder::encode(base64_decode($csrContent)));
+
         $this->log(LogLevel::INFO, 'CSR generated successfully', [
             'csrData' => $csrData,
             'csr'     => $csr,
@@ -323,7 +327,7 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
         // Certificate
         $payload = [
             'resource' => 'new-cert',
-            'csr'      => $csr,
+            'csr'      => $csrContent,
         ];
 
         $this->log(LogLevel::DEBUG, 'Requesting a certificate for domain {domain} ...', [

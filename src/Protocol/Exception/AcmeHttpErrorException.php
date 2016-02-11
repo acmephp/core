@@ -14,6 +14,7 @@ namespace AcmePhp\Core\Protocol\Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * HTTP code status is error.
@@ -31,7 +32,7 @@ class AcmeHttpErrorException extends AcmeProtocolException
             $message = 'The ACME server returned an error HTTP status code ';
             $message .= 'during request to '.$requestUrl;
 
-            if ($exception instanceof RequestException) {
+            if ($exception instanceof RequestException && $exception->getResponse() instanceof ResponseInterface) {
                 $code = $exception->getResponse()->getStatusCode();
 
                 $body = \GuzzleHttp\Psr7\readline($exception->getResponse()->getBody());
