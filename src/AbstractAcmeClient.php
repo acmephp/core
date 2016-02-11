@@ -161,11 +161,17 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
             $payload['contact'] = ['mailto:'.$email];
         }
 
-        $this->log(LogLevel::DEBUG, sprintf('Registering account with payload %s ...', json_encode($payload)));
+        $this->log(LogLevel::DEBUG, 'Registering account ...', [
+            'server' => $this->getCABaseUrl(),
+            'payload' => $payload,
+        ]);
 
         $response = $this->httpClient->request('POST', '/acme/new-reg', $payload);
 
-        $this->log(LogLevel::INFO, 'Account registered');
+        $this->log(LogLevel::INFO, 'Account registered', [
+            'server' => $this->getCABaseUrl(),
+            'payload' => json_encode($payload),
+        ]);
 
         return $response;
     }
@@ -178,7 +184,9 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
         $privateAccountKey = $this->accountKeyPair->getPrivateKey();
         $accountKeyDetails = openssl_pkey_get_details($privateAccountKey);
 
-        $this->log(LogLevel::DEBUG, sprintf('Requesting challenge for domain %s ...', $domain));
+        $this->log(LogLevel::DEBUG, 'Requesting challenge for domain {domain} ...', [
+            'domain' => $domain,
+        ]);
 
         $response = $this->httpClient->request('POST', '/acme/new-authz', [
             'resource'   => 'new-authz',
@@ -196,8 +204,6 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
             if ('http-01' === $challenge['type']) {
                 $token = $challenge['token'];
 
-                $this->log(LogLevel::INFO, sprintf('Challenge data successfully found: %s', $token));
-
                 $header = [
                     // This order matters
                     'e'   => Base64UrlSafeEncoder::encode($accountKeyDetails['rsa']['e']),
@@ -207,6 +213,13 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
 
                 $payload = $token.'.'.Base64UrlSafeEncoder::encode(hash('sha256', json_encode($header), true));
                 $location = $this->httpClient->getLastLocation();
+
+                $this->log(LogLevel::INFO, 'Challenge data found for domain {domain}', [
+                    'domain' => $domain,
+                    'token' => $token,
+                    'payload' => $payload,
+                    'location' => $location,
+                ]);
 
                 return new Challenge($domain, $challenge['uri'], $token, $payload, $location);
             }
@@ -218,20 +231,23 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
     /**
      * @see checkChallenge()
      */
-    protected function doCheckChallenge($challenge, $timeout)
+    protected function doCheckChallenge(Challenge $challenge, $timeout)
     {
-        $this->log(LogLevel::DEBUG, sprintf(
-            'Asking server to challenge http://%s/.well-known/acme-challenge/%s ...',
-            $challenge->getDomain(),
-            $challenge->getToken()
-        ));
-
         $payload = [
             'resource'         => 'challenge',
             'type'             => 'http-01',
             'keyAuthorization' => $challenge->getPayload(),
             'token'            => $challenge->getToken(),
         ];
+
+        $this->log(LogLevel::DEBUG, 'Asking server to check challenge on {url} ...', [
+            'url' => sprintf(
+                'http://%s/.well-known/acme-challenge/%s',
+                $challenge->getDomain(),
+                $challenge->getToken()
+            ),
+            'payload' => $payload,
+        ]);
 
         $response = $this->httpClient->request('POST', $challenge->getUrl(), $payload);
 
@@ -261,7 +277,14 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
             throw new AcmeChallengeTimedOutException($response);
         }
 
-        $this->log(LogLevel::INFO, sprintf('Check challenge request succeded (body: %s)', json_encode($response)));
+        $this->log(LogLevel::INFO, 'Challenge check succeded', [
+            'url' => sprintf(
+                'http://%s/.well-known/acme-challenge/%s',
+                $challenge->getDomain(),
+                $challenge->getToken()
+            ),
+            'payload' => $payload,
+        ]);
     }
 
     /**
@@ -269,11 +292,13 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
      */
     protected function doRequestCertificate($domain, KeyPair $domainKeyPair, CSR $csr, $timeout)
     {
-        $this->log(LogLevel::DEBUG, 'Generating Certificate Signing Request...');
-
         // CSR
         $csrData = $csr->toArray();
         $csrData['commonName'] = $domain;
+
+        $this->log(LogLevel::DEBUG, 'Generating Certificate Signing Request ...', [
+            'csrData' => $csrData,
+        ]);
 
         $csr = openssl_csr_new(
             $csrData,
@@ -290,15 +315,21 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
 
         openssl_csr_export($csr, $csr);
 
-        $this->log(LogLevel::INFO, 'CSR generated successfully...');
+        $this->log(LogLevel::INFO, 'CSR generated successfully', [
+            'csrData' => $csrData,
+            'csr' => $csr,
+        ]);
 
         // Certificate
-        $this->log(LogLevel::DEBUG, 'Requesting server a certificate for domain '.$domain.'...');
-
         $payload = [
             'resource' => 'new-cert',
             'csr'      => $csr,
         ];
+
+        $this->log(LogLevel::DEBUG, 'Requesting a certificate for domain {domain} ...', [
+            'domain' => $domain,
+            'payload' => $payload,
+        ]);
 
         $response = $this->httpClient->request('POST', '/acme/new-cert', $payload);
         $location = $this->httpClient->getLastLocation();
@@ -325,13 +356,22 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
             throw new AcmeCertificateRequestTimedOutException($response);
         }
 
-        $this->log(LogLevel::INFO, 'Certificate request succeeded, parsing it...');
-
         $body = \GuzzleHttp\Psr7\readline($response->getBody());
+
+        $this->log(LogLevel::INFO, 'Certificate request succeeded, parsing it ...', [
+            'domain' => $domain,
+            'payload' => $payload,
+            'response' => $body,
+        ]);
+
         $pem = chunk_split(base64_encode($body), 64, "\n");
         $pem = "-----BEGIN CERTIFICATE-----\n".$pem."-----END CERTIFICATE-----\n";
 
-        $this->log(LogLevel::INFO, 'Certificate paarsed successfully');
+        $this->log(LogLevel::INFO, 'Certificate parsed successfully', [
+            'domain' => $domain,
+            'payload' => $payload,
+            'pem' => $pem,
+        ]);
 
         return new Certificate($domain, $domainKeyPair, $pem);
     }
