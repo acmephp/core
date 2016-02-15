@@ -12,7 +12,6 @@
 namespace AcmePhp\Core\Protocol;
 
 use AcmePhp\Core\Protocol\Exception\AcmeHttpErrorException;
-use AcmePhp\Core\Protocol\Exception\AcmeInvalidResponseException;
 use AcmePhp\Core\Ssl\KeyPair;
 use AcmePhp\Core\Util\Base64UrlSafeEncoder;
 use GuzzleHttp\Client;
