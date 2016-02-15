@@ -28,29 +28,27 @@ class AcmeHttpErrorException extends AcmeProtocolException
         $requestUrl = \GuzzleHttp\Psr7\uri_for($request->getUri());
         $code = 400;
 
-        if ($exception instanceof GuzzleException) {
-            $message = 'The ACME server returned an error HTTP status code ';
+        if ($exception instanceof RequestException && $exception->getResponse() instanceof ResponseInterface) {
+            $message = 'The ACME server returned the error HTTP status code ';
             $message .= 'during request to '.$requestUrl;
 
-            if ($exception instanceof RequestException && $exception->getResponse() instanceof ResponseInterface) {
-                $code = $exception->getResponse()->getStatusCode();
+            $code = $exception->getResponse()->getStatusCode();
 
-                $body = \GuzzleHttp\Psr7\copy_to_string($exception->getResponse()->getBody());
-                $json = @json_decode($body, true);
+            $body = \GuzzleHttp\Psr7\copy_to_string($exception->getResponse()->getBody());
+            $json = @json_decode($body, true);
 
-                if ($json && array_key_exists('detail', $json)) {
-                    $message .= ' (detail: '.$code.' '.$json['detail'].')';
-                } else {
-                    $summary = RequestException::getResponseBodySummary($exception->getResponse());
+            if ($json && array_key_exists('detail', $json)) {
+                $message .= ' (detail: '.$code.' '.$json['detail'].')';
+            } else {
+                $summary = RequestException::getResponseBodySummary($exception->getResponse());
 
-                    if ($summary) {
-                        $message .= ' (response: '.$code.' '.$summary.')';
-                    }
+                if ($summary) {
+                    $message .= ' (response: '.$code.' '.$summary.')';
                 }
             }
         } else {
             $message = 'An error occured during request to '.$requestUrl;
-            $message .= '(error: '.$exception->getMessage().')';
+            $message .= ' (error: '.$exception->getMessage().')';
         }
 
         parent::__construct($message, $code, $exception);

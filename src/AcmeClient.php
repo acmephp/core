@@ -39,8 +39,6 @@ class AcmeClient extends AbstractAcmeClient
      * @param string               $caLicense      The Certificate Authority license document URL.
      * @param KeyPair              $accountKeyPair The account KeyPair to use for dialog with the Certificate Authority.
      * @param LoggerInterface|null $logger
-     *
-     * @throws LoadingSslKeyFailedException If the provided account keys can not be loaded by OpenSSL.
      */
     public function __construct($caBaseUrl, $caLicense, KeyPair $accountKeyPair = null, LoggerInterface $logger = null)
     {
