@@ -62,6 +62,6 @@ class ResourcesDirectory
     {
         Assert::oneOf($resource, self::getResourcesNames(), 'getResourceUrl() expected one of: %2$s. Got: %s');
 
-        return isset($this->resources[$resource]) ? $this->resources : null;
+        return isset($this->resources[$resource]) ? $this->resources[$resource] : null;
     }
 }
