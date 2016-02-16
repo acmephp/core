@@ -59,7 +59,7 @@ class SecureHttpClient
      * @param string $endpoint
      * @param array  $payload
      *
-     * @return array If the server returns an invalid response.
+     * @return array|string Array if the data is valid JSON, string otherwise.
      */
     public function request($method, $endpoint, array $payload)
     {
@@ -74,10 +74,6 @@ class SecureHttpClient
                 'e'   => Base64UrlSafeEncoder::encode($details['rsa']['e']),
             ],
         ];
-
-        if (!$this->lastResponse) {
-            $this->lastResponse = $this->unsignedRequest('GET', '/directory');
-        }
 
         $protected = $header;
         $protected['nonce'] = $this->lastResponse->getHeaderLine('Replay-Nonce');

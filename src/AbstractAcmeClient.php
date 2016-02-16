@@ -13,16 +13,17 @@ namespace AcmePhp\Core;
 
 use AcmePhp\Core\Exception\AccountKeyPairMissingException;
 use AcmePhp\Core\Protocol\Challenge;
+use AcmePhp\Core\Protocol\ResourcesDirectory;
 use AcmePhp\Core\Protocol\Exception\AcmeCertificateRequestFailedException;
 use AcmePhp\Core\Protocol\Exception\AcmeCertificateRequestTimedOutException;
 use AcmePhp\Core\Protocol\Exception\AcmeChallengeFailedException;
 use AcmePhp\Core\Protocol\Exception\AcmeChallengeNotSupportedException;
 use AcmePhp\Core\Protocol\Exception\AcmeChallengeTimedOutException;
+use AcmePhp\Core\Protocol\Exception\AcmeInvalidResponseException;
 use AcmePhp\Core\Protocol\SecureHttpClient;
 use AcmePhp\Core\Ssl\Certificate;
 use AcmePhp\Core\Ssl\CSR;
 use AcmePhp\Core\Ssl\Exception\GeneratingCsrFailedException;
-use AcmePhp\Core\Ssl\Exception\LoadingSslKeyFailedException;
 use AcmePhp\Core\Ssl\KeyPair;
 use AcmePhp\Core\Util\Base64UrlSafeEncoder;
 use Psr\Log\LoggerInterface;
@@ -45,6 +46,11 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
      * @var KeyPair
      */
     private $accountKeyPair;
+
+    /**
+     * @var ResourcesDirectory
+     */
+    private $resourcesDirectory;
 
     /**
      * @var SecureHttpClient
@@ -94,11 +100,9 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
      */
     public function registerAccount($email = null)
     {
-        if (!$this->accountKeyPair) {
-            throw new AccountKeyPairMissingException();
-        }
-
         Assert::nullOrString($email, 'registerAccount::$email expected a string or null. Got: %s');
+
+        $this->prepare();
 
         return $this->doRegisterAccount($email);
     }
@@ -108,11 +112,9 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
      */
     public function requestChallenge($domain)
     {
-        if (!$this->accountKeyPair) {
-            throw new AccountKeyPairMissingException();
-        }
-
         Assert::stringNotEmpty($domain, 'requestChallenge::$domain expected a non-empty string. Got: %s');
+
+        $this->prepare();
 
         return $this->doRequestChallenge($domain);
     }
@@ -122,11 +124,9 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
      */
     public function checkChallenge(Challenge $challenge, $timeout = 180)
     {
-        if (!$this->accountKeyPair) {
-            throw new AccountKeyPairMissingException();
-        }
-
         Assert::integer($timeout, 'checkChallenge::$timeout expected an integer. Got: %s');
+
+        $this->prepare();
 
         $this->doCheckChallenge($challenge, $timeout);
     }
@@ -136,12 +136,10 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
      */
     public function requestCertificate($domain, KeyPair $domainKeyPair, CSR $csr, $timeout = 180)
     {
-        if (!$this->accountKeyPair) {
-            throw new AccountKeyPairMissingException();
-        }
-
         Assert::stringNotEmpty($domain, 'requestCertificate::$domain expected a non-empty string. Got: %s');
         Assert::integer($timeout, 'requestCertificate::$timeout expected an integer. Got: %s');
+
+        $this->prepare();
 
         return $this->doRequestCertificate($domain, $domainKeyPair, $csr, $timeout);
     }
@@ -152,7 +150,7 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
     protected function doRegisterAccount($email)
     {
         $payload = [];
-        $payload['resource'] = 'new-reg';
+        $payload['resource'] = ResourcesDirectory::NEW_REGISTRATION;
         $payload['agreement'] = $this->getCALicense();
 
         if ($email) {
@@ -164,7 +162,11 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
             'payload' => $payload,
         ]);
 
-        $response = $this->httpClient->request('POST', '/acme/new-reg', $payload);
+        $response = $this->httpClient->request(
+            'POST',
+            $this->resourcesDirectory->getResourceUrl(ResourcesDirectory::NEW_REGISTRATION),
+            $payload
+        );
 
         $this->log(LogLevel::INFO, 'Account registered', [
             'server'  => $this->getCABaseUrl(),
@@ -186,13 +188,17 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
             'domain' => $domain,
         ]);
 
-        $response = $this->httpClient->request('POST', '/acme/new-authz', [
-            'resource'   => 'new-authz',
-            'identifier' => [
-                'type'  => 'dns',
-                'value' => $domain,
-            ],
-        ]);
+        $response = $this->httpClient->request(
+            'POST',
+            $this->resourcesDirectory->getResourceUrl(ResourcesDirectory::NEW_AUTHORIZATION),
+            [
+                'resource'   => 'new-authz',
+                'identifier' => [
+                    'type'  => 'dns',
+                    'value' => $domain,
+                ],
+            ]
+        );
 
         if (!isset($response['challenges']) || 0 === count($response['challenges'])) {
             throw new AcmeChallengeNotSupportedException();
@@ -325,7 +331,7 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
 
         // Certificate
         $payload = [
-            'resource' => 'new-cert',
+            'resource' => ResourcesDirectory::NEW_CERTIFICATE,
             'csr'      => $csrContent,
         ];
 
@@ -334,7 +340,12 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
             'payload' => $payload,
         ]);
 
-        $response = $this->httpClient->request('POST', '/acme/new-cert', $payload);
+        $response = $this->httpClient->request(
+            'POST',
+            $this->resourcesDirectory->getResourceUrl(ResourcesDirectory::NEW_CERTIFICATE),
+            $payload
+        );
+
         $location = $this->httpClient->getLastLocation();
 
         // Waiting loop
@@ -390,6 +401,34 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
     {
         if ($this->logger) {
             $this->logger->log($level, $message, $context);
+        }
+    }
+
+    /**
+     * Prepare this client by checking the presence of an account key pair
+     * and contacting the server to know the endpoints URLs.
+     */
+    private function prepare()
+    {
+        if (!$this->accountKeyPair) {
+            throw new AccountKeyPairMissingException();
+        }
+
+        if (!$this->httpClient) {
+            $this->httpClient = new SecureHttpClient($this->getCABaseUrl(), $this->accountKeyPair);
+        }
+
+        if (!$this->resourcesDirectory) {
+            $response = $this->httpClient->unsignedRequest('GET', '/directory');
+
+            $resourcesDirectory = \GuzzleHttp\Psr7\copy_to_string($response->getBody());
+            $resourcesDirectory = @json_decode($resourcesDirectory, true);
+
+            if (!$resourcesDirectory) {
+                throw new AcmeInvalidResponseException('GET', '/directory', [], $response);
+            }
+
+            $this->resourcesDirectory = new ResourcesDirectory($resourcesDirectory);
         }
     }
 }
