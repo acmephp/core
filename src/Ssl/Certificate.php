@@ -21,6 +21,11 @@ use Webmozart\Assert\Assert;
 class Certificate
 {
     /**
+     * @var CSR
+     */
+    private $csrContent;
+
+    /**
      * @var string
      */
     private $domain;
@@ -36,18 +41,28 @@ class Certificate
     private $pem;
 
     /**
+     * @param string  $csrContent
      * @param string  $domain
      * @param KeyPair $domainKeyPair
      * @param string  $pem
      */
-    public function __construct($domain, KeyPair $domainKeyPair, $pem)
+    public function __construct($csrContent, $domain, KeyPair $domainKeyPair, $pem)
     {
         Assert::stringNotEmpty($domain, 'Certificate::$domain expected a non-empty string. Got: %s');
         Assert::stringNotEmpty($pem, 'Certificate::$fullchain expected a non-empty string. Got: %s');
 
+        $this->csrContent = $csrContent;
         $this->domain = $domain;
         $this->domainKeyPair = $domainKeyPair;
         $this->pem = $pem;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCsrContent()
+    {
+        return $this->csrContent;
     }
 
     /**

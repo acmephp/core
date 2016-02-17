@@ -145,6 +145,20 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public function renewCertificate($domain, KeyPair $domainKeyPair, $csrContent, $timeout = 180)
+    {
+        Assert::stringNotEmpty($domain, 'renewCertificate::$domain expected a non-empty string. Got: %s');
+        Assert::integer($timeout, 'renewCertificate::$timeout expected an integer. Got: %s');
+        Assert::stringNotEmpty($csrContent, 'renewCertificate::$csrContent expected a non-empty string. Got: %s');
+
+        $this->prepare();
+
+        return $this->doRenewCertificate($domain, $domainKeyPair, $csrContent, $timeout);
+    }
+
+    /**
      * @see requestAccount()
      */
     protected function doRegisterAccount($email)
@@ -291,7 +305,9 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
      */
     protected function doRequestCertificate($domain, KeyPair $domainKeyPair, CSR $csr, $timeout)
     {
-        // CSR
+        /*
+         * Generate CSR and then "renew certificate"
+         */
         $csrData = $csr->toArray();
         $csrData['commonName'] = $domain;
 
@@ -300,6 +316,7 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
         ]);
 
         $privateKey = $domainKeyPair->getPrivateKey();
+
         $csr = openssl_csr_new(
             $csrData,
             $privateKey,
@@ -324,7 +341,14 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
             'csr'     => $csr,
         ]);
 
-        // Certificate
+        return $this->doRenewCertificate($domain, $domainKeyPair, $csrContent, $timeout);
+    }
+
+    /**
+     * @see renewCertificate()
+     */
+    protected function doRenewCertificate($domain, KeyPair $domainKeyPair, $csrContent, $timeout)
+    {
         $payload = [
             'resource' => ResourcesDirectory::NEW_CERTIFICATE,
             'csr'      => $csrContent,
@@ -386,7 +410,7 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
             'pem'     => $pem,
         ]);
 
-        return new Certificate($domain, $domainKeyPair, $pem);
+        return new Certificate($csrContent, $domain, $domainKeyPair, $pem);
     }
 
     /**
