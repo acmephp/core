@@ -303,7 +303,7 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
         $this->log(LogLevel::DEBUG, 'Generating Certificate Signing Request ...', [
             'csrData' => $csrData,
         ]);
-        
+
         $privateKey = $domainKeyPair->getPrivateKey();
         $csr = openssl_csr_new(
             $csrData,
