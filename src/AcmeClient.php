@@ -11,7 +11,6 @@
 
 namespace AcmePhp\Core;
 
-use AcmePhp\Core\Ssl\Exception\LoadingSslKeyFailedException;
 use AcmePhp\Core\Ssl\KeyPair;
 use Psr\Log\LoggerInterface;
 
@@ -22,6 +21,8 @@ use Psr\Log\LoggerInterface;
  */
 class AcmeClient extends AbstractAcmeClient
 {
+    const VERSION = '0.0.0';
+
     /**
      * @var string
      */
