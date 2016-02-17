@@ -23,8 +23,12 @@ class ResourcesDirectory
     const NEW_REGISTRATION = 'new-reg';
     const RECOVER_REGISTRATION = 'recover-reg';
     const NEW_AUTHORIZATION = 'new-authz';
-    const NEW_CERTIFICATE = 'new-authz';
-    const REVOKE_CERTIFICATE = 'new-authz';
+    const NEW_CERTIFICATE = 'new-cert';
+    const REVOKE_CERTIFICATE = 'revoke-cert';
+    const REGISTRATION = 'reg';
+    const AUTHORIZATION = 'authz';
+    const CHALLENGE = 'challenge';
+    const CERTIFICATE = 'cert';
 
     /**
      * @var array
@@ -60,7 +64,11 @@ class ResourcesDirectory
      */
     public function getResourceUrl($resource)
     {
-        Assert::oneOf($resource, self::getResourcesNames(), 'getResourceUrl() expected one of: %2$s. Got: %s');
+        Assert::oneOf(
+            $resource,
+            self::getResourcesNames(),
+            'Resource type "%s" is not supported by the ACME server (supported: %2$s)'
+        );
 
         return isset($this->resources[$resource]) ? $this->resources[$resource] : null;
     }

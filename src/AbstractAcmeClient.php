@@ -354,7 +354,11 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
             }
 
             if (202 !== $this->httpClient->getLastCode()) {
-                throw new AcmeCertificateRequestFailedException($response);
+                $data = @json_decode($response, true);
+
+                throw new AcmeCertificateRequestFailedException(
+                    $data ?: [ 'body' => \GuzzleHttp\Psr7\copy_to_string($response->getBody()) ]
+                );
             }
 
             $waitingTime++;
