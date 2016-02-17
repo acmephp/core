@@ -11,7 +11,6 @@
 
 namespace AcmePhp\Core\Protocol\Exception;
 
-use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;

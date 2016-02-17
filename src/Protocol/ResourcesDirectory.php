@@ -60,6 +60,7 @@ class ResourcesDirectory
      * Find a resource URL.
      *
      * @param string $resource
+     *
      * @return string
      */
     public function getResourceUrl($resource)

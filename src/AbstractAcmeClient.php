@@ -13,13 +13,13 @@ namespace AcmePhp\Core;
 
 use AcmePhp\Core\Exception\AccountKeyPairMissingException;
 use AcmePhp\Core\Protocol\Challenge;
-use AcmePhp\Core\Protocol\ResourcesDirectory;
 use AcmePhp\Core\Protocol\Exception\AcmeCertificateRequestFailedException;
 use AcmePhp\Core\Protocol\Exception\AcmeCertificateRequestTimedOutException;
 use AcmePhp\Core\Protocol\Exception\AcmeChallengeFailedException;
 use AcmePhp\Core\Protocol\Exception\AcmeChallengeNotSupportedException;
 use AcmePhp\Core\Protocol\Exception\AcmeChallengeTimedOutException;
 use AcmePhp\Core\Protocol\Exception\AcmeInvalidResponseException;
+use AcmePhp\Core\Protocol\ResourcesDirectory;
 use AcmePhp\Core\Protocol\SecureHttpClient;
 use AcmePhp\Core\Ssl\Certificate;
 use AcmePhp\Core\Ssl\CSR;
@@ -381,7 +381,7 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
                 $data = @json_decode($response, true);
 
                 throw new AcmeCertificateRequestFailedException(
-                    $data ?: [ 'body' => \GuzzleHttp\Psr7\copy_to_string($response->getBody()) ]
+                    $data ?: ['body' => \GuzzleHttp\Psr7\copy_to_string($response->getBody())]
                 );
             }
 
