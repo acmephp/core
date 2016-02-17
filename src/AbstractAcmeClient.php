@@ -168,11 +168,6 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
             $payload
         );
 
-        $this->log(LogLevel::INFO, 'Account registered', [
-            'server'  => $this->getCABaseUrl(),
-            'payload' => json_encode($payload),
-        ]);
-
         return $response;
     }
 
