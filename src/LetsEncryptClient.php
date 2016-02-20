@@ -19,6 +19,17 @@ namespace AcmePhp\Core;
 class LetsEncryptClient extends AbstractAcmeClient
 {
     /**
+     * @return array
+     */
+    public static function getLetsEncryptCertificateChain()
+    {
+        return [
+            __DIR__ . '/../res/letsencrypt-x1.pem',
+            __DIR__ . '/../res/letsencrypt-root.pem',
+        ];
+    }
+
+    /**
      * {@inheritdoc}
      */
     protected function getCABaseUrl()
@@ -39,9 +50,6 @@ class LetsEncryptClient extends AbstractAcmeClient
      */
     public function getCertificatesChain()
     {
-        return [
-            __DIR__ . '/../res/letsencrypt-x1.pem',
-            __DIR__ . '/../res/letsencrypt-root.pem',
-        ];
+        return self::getLetsEncryptCertificateChain();
     }
 }
