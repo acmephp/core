@@ -72,6 +72,13 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
     abstract protected function getCALicense();
 
     /**
+     * Return an array of path to include in the fullchain generated certificates.
+     *
+     * @return string[]
+     */
+    abstract public function getCertificatesChain();
+
+    /**
      * Create the client.
      *
      * @param KeyPair              $accountKeyPair The account KeyPair to use for dialog with the Certificate Authority.

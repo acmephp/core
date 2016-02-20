@@ -34,19 +34,32 @@ class AcmeClient extends AbstractAcmeClient
     private $caLicense;
 
     /**
+     * @var array
+     */
+    private $certificatesChain;
+
+    /**
      * Create the client.
      *
-     * @param string               $caBaseUrl      The Certificate Authority base URL.
-     * @param string               $caLicense      The Certificate Authority license document URL.
-     * @param KeyPair              $accountKeyPair The account KeyPair to use for dialog with the Certificate Authority.
+     * @param string $caBaseUrl The Certificate Authority base URL.
+     * @param string $caLicense The Certificate Authority license document URL.
+     * @param KeyPair $accountKeyPair The account KeyPair to use for dialog with the Certificate Authority.
      * @param LoggerInterface|null $logger
+     * @param array $certificatesChain
      */
-    public function __construct($caBaseUrl, $caLicense, KeyPair $accountKeyPair = null, LoggerInterface $logger = null)
+    public function __construct(
+        $caBaseUrl,
+        $caLicense,
+        KeyPair $accountKeyPair = null,
+        LoggerInterface $logger = null,
+        array $certificatesChain = []
+    )
     {
         parent::__construct(null, $logger);
 
         $this->caBaseUrl = $caBaseUrl;
         $this->caLicense = $caLicense;
+        $this->certificatesChain = $certificatesChain;
 
         $this->useAccountKeyPair($accountKeyPair);
     }
@@ -65,5 +78,13 @@ class AcmeClient extends AbstractAcmeClient
     protected function getCALicense()
     {
         return $this->caLicense;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getCertificatesChain()
+    {
+        return $this->certificatesChain;
     }
 }

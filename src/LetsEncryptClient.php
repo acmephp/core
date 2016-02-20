@@ -33,4 +33,15 @@ class LetsEncryptClient extends AbstractAcmeClient
     {
         return 'https://letsencrypt.org/documents/LE-SA-v1.0.1-July-27-2015.pdf';
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getCertificatesChain()
+    {
+        return [
+            __DIR__ . '/../res/letsencrypt-x1.pem',
+            __DIR__ . '/../res/letsencrypt-root.pem',
+        ];
+    }
 }
