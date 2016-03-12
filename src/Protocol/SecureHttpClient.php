@@ -15,6 +15,7 @@ use AcmePhp\Core\Protocol\Exception\AcmeHttpErrorException;
 use AcmePhp\Core\Ssl\KeyPair;
 use AcmePhp\Core\Util\Base64UrlSafeEncoder;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Psr7\Request;
 use Psr\Http\Message\ResponseInterface;
 
@@ -124,6 +125,10 @@ class SecureHttpClient
 
         try {
             $this->lastResponse = $this->httpClient->send($request);
+        } catch (ClientException $exception) {
+            $this->lastResponse = $exception->getResponse();
+            
+            throw new AcmeHttpErrorException($request, $exception);
         } catch (\Exception $exception) {
             throw new AcmeHttpErrorException($request, $exception);
         }
