@@ -51,12 +51,18 @@ class CSR
     private $emailAddress;
 
     /**
+     * @var array
+     */
+    private $subjectAlternativeNames;
+
+    /**
      * @param string $countryName
      * @param string $stateOrProvinceName
      * @param string $localityName
      * @param string $organizationName
      * @param string $organizationalUnitName
      * @param string $emailAddress
+     * @param string $subjectAlternativeNames
      */
     public function __construct(
         $countryName,
@@ -64,7 +70,8 @@ class CSR
         $localityName,
         $organizationName,
         $organizationalUnitName,
-        $emailAddress
+        $emailAddress,
+        $subjectAlternativeNames = []
     ) {
         Assert::string($countryName, 'CSR::$countryName expected a string. Got: %s');
         Assert::string($stateOrProvinceName, 'CSR::$stateOrProvinceName expected a string. Got: %s');
@@ -72,6 +79,8 @@ class CSR
         Assert::string($organizationName, 'CSR::$organizationName expected a string. Got: %s');
         Assert::string($organizationalUnitName, 'CSR::$organizationalUnitName expected a string. Got: %s');
         Assert::string($emailAddress, 'CSR::$emailAddress expected a string. Got: %s');
+        Assert::isArray($subjectAlternativeNames, 'CSR::$subjectAlternativeNames expected an array. Got: %s');
+        Assert::allString($subjectAlternativeNames, 'CSR::$subjectAlternativeNames expected an array of string. Got: %s');
 
         $this->countryName = $countryName;
         $this->stateOrProvinceName = $stateOrProvinceName;
@@ -79,6 +88,7 @@ class CSR
         $this->organizationName = $organizationName;
         $this->organizationalUnitName = $organizationalUnitName;
         $this->emailAddress = $emailAddress;
+        $this->subjectAlternativeNames = array_unique($subjectAlternativeNames);
     }
 
     public function toArray()
@@ -139,5 +149,13 @@ class CSR
     public function getEmailAddress()
     {
         return $this->emailAddress;
+    }
+
+    /**
+     * @return array
+     */
+    public function getSubjectAlternativeNames()
+    {
+        return $this->subjectAlternativeNames;
     }
 }
