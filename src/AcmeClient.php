@@ -41,11 +41,11 @@ class AcmeClient extends AbstractAcmeClient
     /**
      * Create the client.
      *
-     * @param string $caBaseUrl The Certificate Authority base URL.
-     * @param string $caLicense The Certificate Authority license document URL.
-     * @param KeyPair $accountKeyPair The account KeyPair to use for dialog with the Certificate Authority.
+     * @param string               $caBaseUrl         The Certificate Authority base URL.
+     * @param string               $caLicense         The Certificate Authority license document URL.
+     * @param KeyPair              $accountKeyPair    The account KeyPair to use for dialog with the Certificate Authority.
      * @param LoggerInterface|null $logger
-     * @param array $certificatesChain
+     * @param array                $certificatesChain
      */
     public function __construct(
         $caBaseUrl,
@@ -53,8 +53,7 @@ class AcmeClient extends AbstractAcmeClient
         KeyPair $accountKeyPair = null,
         LoggerInterface $logger = null,
         array $certificatesChain = []
-    )
-    {
+    ) {
         parent::__construct(null, $logger);
 
         $this->caBaseUrl = $caBaseUrl;

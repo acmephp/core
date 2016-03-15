@@ -127,7 +127,7 @@ class SecureHttpClient
             $this->lastResponse = $this->httpClient->send($request);
         } catch (ClientException $exception) {
             $this->lastResponse = $exception->getResponse();
-            
+
             throw new AcmeHttpErrorException($request, $exception);
         } catch (\Exception $exception) {
             throw new AcmeHttpErrorException($request, $exception);
