@@ -23,7 +23,7 @@ use AcmePhp\Core\Protocol\ResourcesDirectory;
 use AcmePhp\Core\Protocol\SecureHttpClient;
 use AcmePhp\Core\Ssl\Certificate;
 use AcmePhp\Core\Ssl\CSR;
-use AcmePhp\Core\Ssl\Exception\GeneratingCsrFailedException;
+use AcmePhp\Core\Ssl\CSRGenerator;
 use AcmePhp\Core\Ssl\KeyPair;
 use AcmePhp\Core\Util\Base64UrlSafeEncoder;
 use Psr\Log\LoggerInterface;
@@ -46,6 +46,11 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
      * @var KeyPair
      */
     private $accountKeyPair;
+
+    /**
+     * @var CSRGenerator
+     */
+    private $csrGenerator;
 
     /**
      * @var ResourcesDirectory
@@ -81,16 +86,21 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
     /**
      * Create the client.
      *
-     * @param KeyPair              $accountKeyPair The account KeyPair to use for dialog with the Certificate Authority.
+     * @param KeyPair|null         $accountKeyPair The account KeyPair to use for dialog with the Certificate Authority.
      * @param LoggerInterface|null $logger
+     * @param CSRGenerator         $csrGenerator
      */
-    public function __construct(KeyPair $accountKeyPair = null, LoggerInterface $logger = null)
-    {
+    public function __construct(
+        KeyPair $accountKeyPair = null,
+        LoggerInterface $logger = null,
+        CSRGenerator $csrGenerator = null
+    ) {
         if ($accountKeyPair) {
             $this->useAccountKeyPair($accountKeyPair);
         }
 
         $this->logger = $logger;
+        $this->csrGenerator = $csrGenerator ?: new CSRGenerator($logger);
     }
 
     /**
@@ -312,39 +322,14 @@ abstract class AbstractAcmeClient implements AcmeClientInterface
      */
     protected function doRequestCertificate($domain, KeyPair $domainKeyPair, CSR $csr, $timeout)
     {
-        /*
-         * Generate CSR and then "renew certificate"
-         */
-        $csrData = $csr->toArray();
-        $csrData['commonName'] = $domain;
-
-        $this->log(LogLevel::DEBUG, 'Generating Certificate Signing Request ...', [
-            'csrData' => $csrData,
-        ]);
-
-        $privateKey = $domainKeyPair->getPrivateKey();
-
-        $csr = openssl_csr_new(
-            $csrData,
-            $privateKey,
-            ['digest_alg' => 'sha256']
-        );
-
-        if (!$csr) {
-            throw new GeneratingCsrFailedException(sprintf(
-                'OpenSSL CSR generation failed with error: %s',
-                openssl_error_string()
-            ));
-        }
-
-        openssl_csr_export($csr, $csr);
+        $csrContent = $this->csrGenerator->generateCSR($domain, $domainKeyPair, $csr);
 
         $humanText = ['-----BEGIN CERTIFICATE REQUEST-----', '-----END CERTIFICATE REQUEST-----'];
-        $csrContent = trim(str_replace($humanText, '', $csr));
+        $csrContent = trim(str_replace($humanText, '', $csrContent));
         $csrContent = trim(Base64UrlSafeEncoder::encode(base64_decode($csrContent)));
 
         $this->log(LogLevel::INFO, 'CSR generated successfully', [
-            'csrData' => $csrData,
+            'csrData' => $csrContent,
             'csr'     => $csr,
         ]);
 
