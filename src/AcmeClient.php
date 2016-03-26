@@ -21,7 +21,7 @@ use Psr\Log\LoggerInterface;
  */
 class AcmeClient extends AbstractAcmeClient
 {
-    const VERSION = '1.0.0-alpha3';
+    const VERSION = '1.0.0-alpha4';
 
     /**
      * @var string
