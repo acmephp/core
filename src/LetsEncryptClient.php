@@ -24,8 +24,8 @@ class LetsEncryptClient extends AbstractAcmeClient
     public static function getLetsEncryptCertificateChain()
     {
         return [
-            __DIR__.'/../res/letsencrypt-x1.pem',
-            __DIR__.'/../res/letsencrypt-root.pem',
+            __DIR__ . '/../res/lets-encrypt-x3-cross-signed.pem',
+            __DIR__ . '/../res/lets-encrypt-x3-root.pem',
         ];
     }
 
