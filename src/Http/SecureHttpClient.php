@@ -9,11 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace AcmePhp\Core\Protocol;
+namespace AcmePhp\Core\Http;
 
-use AcmePhp\Core\Protocol\Exception\AcmeCoreHttpException;
-use AcmePhp\Core\Ssl\KeyPair;
-use AcmePhp\Core\Util\Base64UrlSafeEncoder;
+use AcmePhp\Core\Exception\AcmeCoreHttpException;
+use AcmePhp\Ssl\KeyPair;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Psr7\Request;
@@ -42,15 +41,12 @@ class SecureHttpClient
     private $lastResponse;
 
     /**
-     * @param string  $authority
      * @param KeyPair $accountKeyPair
      */
-    public function __construct($authority, KeyPair $accountKeyPair)
+    public function __construct(KeyPair $accountKeyPair)
     {
         $this->accountKeyPair = $accountKeyPair;
-        $this->httpClient = new Client([
-            'base_uri' => $authority,
-        ]);
+        $this->httpClient = new Client();
     }
 
     /**
@@ -65,25 +61,25 @@ class SecureHttpClient
     public function request($method, $endpoint, array $payload)
     {
         $privateKey = $this->accountKeyPair->getPrivateKey();
-        $details = openssl_pkey_get_details($privateKey);
+        $details = openssl_pkey_get_details($privateKey->getResource());
 
         $header = [
             'alg' => 'RS256',
             'jwk' => [
                 'kty' => 'RSA',
-                'n'   => Base64UrlSafeEncoder::encode($details['rsa']['n']),
-                'e'   => Base64UrlSafeEncoder::encode($details['rsa']['e']),
+                'n'   => Base64SafeEncoder::encode($details['rsa']['n']),
+                'e'   => Base64SafeEncoder::encode($details['rsa']['e']),
             ],
         ];
 
         $protected = $header;
         $protected['nonce'] = $this->lastResponse->getHeaderLine('Replay-Nonce');
 
-        $payload = Base64UrlSafeEncoder::encode(str_replace('\\/', '/', json_encode($payload)));
-        $protected = Base64UrlSafeEncoder::encode(json_encode($protected));
+        $payload = Base64SafeEncoder::encode(str_replace('\\/', '/', json_encode($payload)));
+        $protected = Base64SafeEncoder::encode(json_encode($protected));
 
         openssl_sign($protected.'.'.$payload, $signature, $privateKey, 'SHA256');
-        $signature = Base64UrlSafeEncoder::encode($signature);
+        $signature = Base64SafeEncoder::encode($signature);
 
         $payload = [
             'header'    => $header,
