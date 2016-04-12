@@ -20,7 +20,7 @@ use AcmePhp\Ssl\CertificateResponse;
 use AcmePhp\Ssl\KeyPair;
 
 /**
- * ACME protocol client.
+ * ACME protocol client interface
  *
  * @author Titouan Galopin <galopintitouan@gmail.com>
  */

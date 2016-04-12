@@ -60,8 +60,8 @@ class SecureHttpClient
      */
     public function request($method, $endpoint, array $payload)
     {
-        $privateKey = $this->accountKeyPair->getPrivateKey();
-        $details = openssl_pkey_get_details($privateKey->getResource());
+        $privateKey = $this->accountKeyPair->getPrivateKey()->getResource();
+        $details = openssl_pkey_get_details($privateKey);
 
         $header = [
             'alg' => 'RS256',
@@ -75,7 +75,7 @@ class SecureHttpClient
         $protected = $header;
         $protected['nonce'] = $this->lastResponse->getHeaderLine('Replay-Nonce');
 
-        $payload = Base64SafeEncoder::encode(str_replace('\\/', '/', json_encode($payload)));
+        $payload = Base64SafeEncoder::encode(json_encode($payload, JSON_UNESCAPED_SLASHES));
         $protected = Base64SafeEncoder::encode(json_encode($protected));
 
         openssl_sign($protected.'.'.$payload, $signature, $privateKey, 'SHA256');

@@ -34,6 +34,7 @@
     ],
     "require": {
         "php": ">=5.5.0",
+        "ext-openssl": "*",
         "acmephp/ssl": "^1.0@alpha",
         "psr/log": "^1.0",
         "guzzlehttp/guzzle": "^6.1"
