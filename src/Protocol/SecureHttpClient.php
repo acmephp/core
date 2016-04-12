@@ -11,7 +11,7 @@
 
 namespace AcmePhp\Core\Protocol;
 
-use AcmePhp\Core\Protocol\Exception\AcmeHttpErrorException;
+use AcmePhp\Core\Protocol\Exception\AcmeCoreHttpException;
 use AcmePhp\Core\Ssl\KeyPair;
 use AcmePhp\Core\Util\Base64UrlSafeEncoder;
 use GuzzleHttp\Client;
@@ -109,7 +109,7 @@ class SecureHttpClient
      * @param string $endpoint
      * @param array  $data
      *
-     * @throws AcmeHttpErrorException When the ACME server returns an error HTTP status code.
+     * @throws AcmeCoreHttpException When the ACME server returns an error HTTP status code.
      *
      * @return ResponseInterface
      */
@@ -128,9 +128,9 @@ class SecureHttpClient
         } catch (ClientException $exception) {
             $this->lastResponse = $exception->getResponse();
 
-            throw new AcmeHttpErrorException($request, $exception);
+            throw new AcmeCoreHttpException($request, $exception);
         } catch (\Exception $exception) {
-            throw new AcmeHttpErrorException($request, $exception);
+            throw new AcmeCoreHttpException($request, $exception);
         }
 
         return $this->lastResponse;

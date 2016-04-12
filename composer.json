@@ -4,19 +4,38 @@
     "type": "library",
     "license": "MIT",
     "homepage": "https://github.com/acmephp/core",
-    "keywords": [ "ACME", "letsencrypt", "https", "encryption" ],
+    "keywords": [
+        "acmephp",
+        "letsencrypt",
+        "https",
+        "encryption",
+        "certificate",
+        "ssl",
+        "openssl",
+        "CSR",
+        "x509"
+    ],
     "authors": [
         {
             "name": "Titouan Galopin",
             "email": "galopintitouan@gmail.com",
             "homepage": "http://titouangalopin.com"
+        },
+        {
+            "name": "Jérémy Derussé",
+            "homepage": "https://twitter.com/jderusse"
+        }
+    ],
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "git@github.com:acmephp/ssl.git"
         }
     ],
     "require": {
         "php": ">=5.5.0",
-        "ext-openssl": "*",
+        "acmephp/ssl": "^1.0@alpha",
         "psr/log": "^1.0",
-        "webmozart/assert": "^1.0",
         "guzzlehttp/guzzle": "^6.1"
     },
     "require-dev": {

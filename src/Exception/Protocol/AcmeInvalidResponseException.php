@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace AcmePhp\Core\Protocol\Exception;
+namespace AcmePhp\Core\Exception\Protocol;
 
 use Psr\Http\Message\ResponseInterface;
 

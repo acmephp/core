@@ -9,18 +9,16 @@
  * file that was distributed with this source code.
  */
 
-namespace AcmePhp\Core\Protocol\Exception;
+namespace AcmePhp\Core\Exception;
 
 use GuzzleHttp\Exception\RequestException;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 /**
- * HTTP code status is error.
- *
  * @author Titouan Galopin <galopintitouan@gmail.com>
  */
-class AcmeHttpErrorException extends AcmeProtocolException
+class AcmeCoreHttpException extends AcmeCoreException
 {
     public function __construct(RequestInterface $request, \Exception $exception)
     {

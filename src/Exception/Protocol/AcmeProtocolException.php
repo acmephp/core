@@ -9,13 +9,15 @@
  * file that was distributed with this source code.
  */
 
-namespace AcmePhp\Core\Exception;
+namespace AcmePhp\Core\Exception\Protocol;
+
+use AcmePhp\Core\Exception\AcmeCoreException;
 
 /**
- * Base of all the ACME PHP exceptions.
+ * ACME protocol error.
  *
  * @author Titouan Galopin <galopintitouan@gmail.com>
  */
-class AcmePhpException extends \RuntimeException
+class AcmeProtocolException extends AcmeCoreException
 {
 }

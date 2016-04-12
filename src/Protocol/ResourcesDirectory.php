@@ -33,14 +33,14 @@ class ResourcesDirectory
     /**
      * @var array
      */
-    private $resources;
+    private $serverResources;
 
     /**
-     * @param array $resources
+     * @param array $serverResources
      */
-    public function __construct(array $resources)
+    public function __construct(array $serverResources)
     {
-        $this->resources = $resources;
+        $this->serverResources = $serverResources;
     }
 
     /**
@@ -49,10 +49,15 @@ class ResourcesDirectory
     public static function getResourcesNames()
     {
         return [
+            self::NEW_REGISTRATION,
+            self::RECOVER_REGISTRATION,
             self::NEW_AUTHORIZATION,
             self::NEW_CERTIFICATE,
-            self::NEW_REGISTRATION,
             self::REVOKE_CERTIFICATE,
+            self::REGISTRATION,
+            self::AUTHORIZATION,
+            self::CHALLENGE,
+            self::CERTIFICATE,
         ];
     }
 
@@ -71,6 +76,6 @@ class ResourcesDirectory
             'Resource type "%s" is not supported by the ACME server (supported: %2$s)'
         );
 
-        return isset($this->resources[$resource]) ? $this->resources[$resource] : null;
+        return isset($this->serverResources[$resource]) ? $this->serverResources[$resource] : null;
     }
 }

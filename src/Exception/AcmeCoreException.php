@@ -9,17 +9,11 @@
  * file that was distributed with this source code.
  */
 
-namespace AcmePhp\Core\Protocol\Exception;
+namespace AcmePhp\Core\Exception;
 
 /**
- * The ACME server does not support HTTP challenge.
- *
  * @author Titouan Galopin <galopintitouan@gmail.com>
  */
-class AcmeChallengeNotSupportedException extends AcmeProtocolException
+class AcmeCoreException extends \RuntimeException
 {
-    public function __construct()
-    {
-        parent::__construct('This ACME server does not support HTTP challenge.');
-    }
 }
