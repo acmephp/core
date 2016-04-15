@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace AcmePhp\Core\Tests;
+namespace Tests\AcmePhp\Core\Http;
 
 use AcmePhp\Core\Http\Base64SafeEncoder;
 

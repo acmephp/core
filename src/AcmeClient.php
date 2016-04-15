@@ -19,7 +19,7 @@ use AcmePhp\Ssl\CertificateRequest;
 use AcmePhp\Ssl\KeyPair;
 
 /**
- * ACME protocol client implementation
+ * ACME protocol client implementation.
  *
  * @author Titouan Galopin <galopintitouan@gmail.com>
  */
@@ -46,7 +46,7 @@ class AcmeClient implements AcmeClientInterface
     private $resourcesDirectory;
 
     /**
-     * @param string $directoryUrl
+     * @param string  $directoryUrl
      * @param KeyPair $accountKeyPair
      */
     public function __construct($directoryUrl, KeyPair $accountKeyPair)
@@ -56,7 +56,7 @@ class AcmeClient implements AcmeClientInterface
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function registerAccount($email = null)
     {
@@ -64,7 +64,7 @@ class AcmeClient implements AcmeClientInterface
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function requestChallenge($domain)
     {
@@ -72,7 +72,7 @@ class AcmeClient implements AcmeClientInterface
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function checkChallenge(Challenge $challenge, $timeout = 180)
     {
@@ -80,7 +80,7 @@ class AcmeClient implements AcmeClientInterface
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function requestCertificate($domain, KeyPair $domainKeyPair, CertificateRequest $csr, $timeout = 180)
     {
@@ -93,12 +93,15 @@ class AcmeClient implements AcmeClientInterface
      *
      * @param string $method
      * @param string $resource
-     * @param array $payload
+     * @param array  $payload
+     *
      * @return array|string
      */
     protected function requestResource($method, $resource, array $payload)
     {
-        $this->prepare();
+        if (! $this->httpClient && $this->resourcesDirectory) {
+            return;
+        }
 
         return $this->httpClient->request(
             $method,
@@ -113,10 +116,6 @@ class AcmeClient implements AcmeClientInterface
      */
     private function prepare()
     {
-        if ($this->httpClient && $this->resourcesDirectory) {
-            return;
-        }
-
         $this->httpClient = new SecureHttpClient($this->accountKeyPair);
 
         $response = $this->httpClient->unsignedRequest('GET', $this->directoryUrl);

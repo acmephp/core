@@ -20,7 +20,7 @@ use AcmePhp\Ssl\CertificateResponse;
 use AcmePhp\Ssl\KeyPair;
 
 /**
- * ACME protocol client interface
+ * ACME protocol client interface.
  *
  * @author Titouan Galopin <galopintitouan@gmail.com>
  */
@@ -73,7 +73,7 @@ interface AcmeClientInterface
      * @throws AcmeChallengeTimedOutException When the challenge timed out.
      * @throws AcmeCoreHttpException          When the ACME server returns an error HTTP status code.
      *
-     * @return boolean Was the check successful?
+     * @return bool Was the check successful?
      */
     public function checkChallenge(Challenge $challenge, $timeout = 180);
 
