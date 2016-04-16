@@ -14,6 +14,7 @@ namespace AcmePhp\Core\Http;
 use AcmePhp\Core\Exception\AcmeCoreHttpException;
 use AcmePhp\Ssl\KeyPair;
 use GuzzleHttp\Client;
+use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Psr7\Request;
 use Psr\Http\Message\ResponseInterface;
@@ -42,11 +43,12 @@ class SecureHttpClient
 
     /**
      * @param KeyPair $accountKeyPair
+     * @param ClientInterface|null $httpClient
      */
-    public function __construct(KeyPair $accountKeyPair)
+    public function __construct(KeyPair $accountKeyPair, ClientInterface $httpClient = null)
     {
         $this->accountKeyPair = $accountKeyPair;
-        $this->httpClient = new Client();
+        $this->httpClient = $httpClient ?: new Client();
     }
 
     /**

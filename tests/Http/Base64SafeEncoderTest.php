@@ -17,13 +17,16 @@ class Base64SafeEncoderTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @dataProvider getTestVectors
+     *
+     * @param string $message
+     * @param string $expected
      */
-    public function testEncodeAndDecode($message, $expected_result, $use_padding = false)
+    public function testEncodeAndDecode($message, $expected)
     {
-        $encoded = Base64SafeEncoder::encode($message, $use_padding);
-        $decoded = Base64SafeEncoder::decode($expected_result);
+        $encoded = Base64SafeEncoder::encode($message);
+        $decoded = Base64SafeEncoder::decode($expected);
 
-        $this->assertEquals($expected_result, $encoded);
+        $this->assertEquals($expected, $encoded);
         $this->assertEquals($message, $decoded);
     }
 
@@ -58,16 +61,18 @@ class Base64SafeEncoderTest extends \PHPUnit_Framework_TestCase
                 '', '',
             ],
             [
-                'foo', 'Zm9v', true,
+                'foo', 'Zm9v'
             ],
             [
-                'foobar', 'Zm9vYmFy', true,
+                'foobar', 'Zm9vYmFy'
             ],
         ];
     }
 
     /**
      * @dataProvider getTestBadVectors
+     *
+     * @param string $input
      */
     public function testBadInput($input)
     {

@@ -17,6 +17,7 @@ use AcmePhp\Core\Protocol\Challenge;
 use AcmePhp\Core\Protocol\ResourcesDirectory;
 use AcmePhp\Ssl\CertificateRequest;
 use AcmePhp\Ssl\KeyPair;
+use GuzzleHttp\ClientInterface;
 
 /**
  * ACME protocol client implementation.
@@ -38,7 +39,7 @@ class AcmeClient implements AcmeClientInterface
     /**
      * @var SecureHttpClient
      */
-    private $httpClient;
+    private $secureHttpClient;
 
     /**
      * @var ResourcesDirectory
@@ -46,13 +47,15 @@ class AcmeClient implements AcmeClientInterface
     private $resourcesDirectory;
 
     /**
-     * @param string  $directoryUrl
+     * @param string $directoryUrl
      * @param KeyPair $accountKeyPair
+     * @param ClientInterface|null $httpClient
      */
-    public function __construct($directoryUrl, KeyPair $accountKeyPair)
+    public function __construct($directoryUrl, KeyPair $accountKeyPair, ClientInterface $httpClient = null)
     {
         $this->directoryUrl = $directoryUrl;
         $this->accountKeyPair = $accountKeyPair;
+        $this->secureHttpClient = new SecureHttpClient($this->accountKeyPair, $httpClient);
     }
 
     /**
@@ -99,11 +102,11 @@ class AcmeClient implements AcmeClientInterface
      */
     protected function requestResource($method, $resource, array $payload)
     {
-        if (! $this->httpClient && $this->resourcesDirectory) {
-            return;
+        if (! $this->resourcesDirectory) {
+            $this->createResourcesDirectory();
         }
 
-        return $this->httpClient->request(
+        return $this->secureHttpClient->request(
             $method,
             $this->resourcesDirectory->getResourceUrl($resource),
             $payload
@@ -114,11 +117,9 @@ class AcmeClient implements AcmeClientInterface
      * Prepare this client by checking the presence of an account key pair
      * and contacting the server to know the endpoints URLs.
      */
-    private function prepare()
+    private function createResourcesDirectory()
     {
-        $this->httpClient = new SecureHttpClient($this->accountKeyPair);
-
-        $response = $this->httpClient->unsignedRequest('GET', $this->directoryUrl);
+        $response = $this->secureHttpClient->unsignedRequest('GET', $this->directoryUrl);
 
         $resourcesDirectory = \GuzzleHttp\Psr7\copy_to_string($response->getBody());
         $resourcesDirectory = @json_decode($resourcesDirectory, true);
