@@ -11,6 +11,7 @@
 
 namespace AcmePhp\Core;
 
+use AcmePhp\Core\Exception\AcmeCoreExceptionHandler;
 use AcmePhp\Core\Exception\Protocol\AcmeInvalidResponseException;
 use AcmePhp\Core\Http\SecureHttpClient;
 use AcmePhp\Core\Protocol\Challenge;
@@ -42,6 +43,11 @@ class AcmeClient implements AcmeClientInterface
     private $secureHttpClient;
 
     /**
+     * @var AcmeCoreExceptionHandler
+     */
+    private $exceptionHandler;
+
+    /**
      * @var ResourcesDirectory
      */
     private $resourcesDirectory;
@@ -56,6 +62,7 @@ class AcmeClient implements AcmeClientInterface
         $this->directoryUrl = $directoryUrl;
         $this->accountKeyPair = $accountKeyPair;
         $this->secureHttpClient = new SecureHttpClient($this->accountKeyPair, $httpClient);
+        $this->exceptionHandler = new AcmeCoreExceptionHandler();
     }
 
     /**
@@ -106,7 +113,7 @@ class AcmeClient implements AcmeClientInterface
             $this->createResourcesDirectory();
         }
 
-        return $this->secureHttpClient->request(
+        return $this->secureHttpClient->signedRequest(
             $method,
             $this->resourcesDirectory->getResourceUrl($resource),
             $payload
@@ -125,7 +132,7 @@ class AcmeClient implements AcmeClientInterface
         $resourcesDirectory = @json_decode($resourcesDirectory, true);
 
         if (!$resourcesDirectory) {
-            throw new AcmeInvalidResponseException('GET', $this->directoryUrl, [], $response);
+            throw new AcmeCoreServerMalformedResponseException('GET', $this->directoryUrl, [], $response);
         }
 
         $this->resourcesDirectory = new ResourcesDirectory($resourcesDirectory);

@@ -12,14 +12,8 @@
 namespace AcmePhp\Core\Exception\Protocol;
 
 /**
- * The ACME certificate request timed out.
- *
  * @author Titouan Galopin <galopintitouan@gmail.com>
  */
-class AcmeCertificateRequestTimedOutException extends AcmeProtocolException
+class ExpectedJsonException extends ProtocolException
 {
-    public function __construct(array $response)
-    {
-        parent::__construct(sprintf('Certificate request timed out (body: %s)', json_encode($response)));
-    }
 }

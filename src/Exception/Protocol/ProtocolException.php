@@ -14,10 +14,10 @@ namespace AcmePhp\Core\Exception\Protocol;
 use AcmePhp\Core\Exception\AcmeCoreException;
 
 /**
- * ACME protocol error.
+ * Error because the protocol was not respected.
  *
  * @author Titouan Galopin <galopintitouan@gmail.com>
  */
-class AcmeProtocolException extends AcmeCoreException
+class ProtocolException extends AcmeCoreException
 {
 }

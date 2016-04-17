@@ -11,9 +11,6 @@
 
 namespace AcmePhp\Core;
 
-use AcmePhp\Core\Exception\AcmeCoreHttpException;
-use AcmePhp\Core\Exception\Protocol\AcmeChallengeNotSupportedException;
-use AcmePhp\Core\Exception\Protocol\AcmeChallengeTimedOutException;
 use AcmePhp\Core\Protocol\Challenge;
 use AcmePhp\Ssl\CertificateRequest;
 use AcmePhp\Ssl\CertificateResponse;
@@ -32,7 +29,7 @@ interface AcmeClientInterface
      * @param string|null $email An optionnal e-mail to associate with the
      *                           account.
      *
-     * @throws AcmeCoreHttpException When the ACME server returns an error HTTP status code.
+     * @throws AcmeCoreServerException When the ACME server returns an error HTTP status code.
      *
      * @return array The Certificate Authority response decoded from JSON into
      *               an array.
@@ -50,7 +47,7 @@ interface AcmeClientInterface
      * @param string $domain The domain to challenge.
      *
      * @throws AcmeChallengeNotSupportedException When the HTTP challenge is not supported by the server.
-     * @throws AcmeCoreHttpException              When the ACME server returns an error HTTP status code.
+     * @throws AcmeCoreServerException              When the ACME server returns an error HTTP status code.
      *
      * @return Challenge The data returned by the Certificate Authority.
      */
@@ -71,7 +68,7 @@ interface AcmeClientInterface
      * @param int       $timeout   The timeout period.
      *
      * @throws AcmeChallengeTimedOutException When the challenge timed out.
-     * @throws AcmeCoreHttpException          When the ACME server returns an error HTTP status code.
+     * @throws AcmeCoreServerException          When the ACME server returns an error HTTP status code.
      *
      * @return bool Was the check successful?
      */
@@ -92,7 +89,7 @@ interface AcmeClientInterface
      * @param CertificateRequest $csr           The Certificate Signing Request (informations for the certificate).
      * @param int                $timeout       The timeout period.
      *
-     * @throws AcmeCoreHttpException When the ACME server returns an error HTTP status code.
+     * @throws AcmeCoreServerException When the ACME server returns an error HTTP status code.
      *
      * @return CertificateResponse The certificate data to save somewhere you want.
      */

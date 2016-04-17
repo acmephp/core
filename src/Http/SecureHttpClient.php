@@ -11,11 +11,14 @@
 
 namespace AcmePhp\Core\Http;
 
-use AcmePhp\Core\Exception\AcmeCoreHttpException;
+use AcmePhp\Core\Exception\AcmeCoreServerException;
+use AcmePhp\Core\Exception\Server\AcmeCoreServerMalformedResponseException;
 use AcmePhp\Ssl\KeyPair;
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use Psr\Http\Message\ResponseInterface;
 
@@ -57,10 +60,14 @@ class SecureHttpClient
      * @param string $method
      * @param string $endpoint
      * @param array  $payload
+     * @param bool   $returnJson
+     *
+     * @throws BadResponseException When the ACME server returns an error HTTP status code.
+     * @throws AcmeCoreServerMalformedResponseException When the ACME server does not return valid JSON and $returnJson is true.
      *
      * @return array|string Array if the data is valid JSON, string otherwise.
      */
-    public function request($method, $endpoint, array $payload)
+    public function signedRequest($method, $endpoint, array $payload, $returnJson = true)
     {
         $privateKey = $this->accountKeyPair->getPrivateKey()->getResource();
         $details = openssl_pkey_get_details($privateKey);
@@ -90,28 +97,21 @@ class SecureHttpClient
             'signature' => $signature,
         ];
 
-        $this->unsignedRequest($method, $endpoint, $payload);
-
-        $body = \GuzzleHttp\Psr7\copy_to_string($this->lastResponse->getBody());
-        $data = @json_decode($body, true);
-
-        if (!$data) {
-            return $body;
-        }
-
-        return $data;
+        return $this->unsignedRequest($method, $endpoint, $payload, $returnJson);
     }
 
     /**
      * @param string $method
      * @param string $endpoint
      * @param array  $data
+     * @param bool   $returnJson
      *
-     * @throws AcmeCoreHttpException When the ACME server returns an error HTTP status code.
+     * @throws BadResponseException When the ACME server returns an error HTTP status code.
+     * @throws AcmeCoreServerMalformedResponseException When the ACME server does not return valid JSON and $returnJson is true.
      *
      * @return ResponseInterface
      */
-    public function unsignedRequest($method, $endpoint, array $data = null)
+    public function unsignedRequest($method, $endpoint, array $data = null, $returnJson = true)
     {
         $request = new Request($method, $endpoint);
         $request = $request->withHeader('Accept', 'application/json');
@@ -123,15 +123,26 @@ class SecureHttpClient
 
         try {
             $this->lastResponse = $this->httpClient->send($request);
-        } catch (ClientException $exception) {
-            $this->lastResponse = $exception->getResponse();
+        } catch (RequestException $exception) {
+            if ($exception->getResponse() instanceof ResponseInterface) {
+                $this->lastResponse = $exception->getResponse();
+            }
 
-            throw new AcmeCoreHttpException($request, $exception);
-        } catch (\Exception $exception) {
-            throw new AcmeCoreHttpException($request, $exception);
+            throw $exception;
         }
 
-        return $this->lastResponse;
+        $body = \GuzzleHttp\Psr7\copy_to_string($this->lastResponse->getBody());
+        $data = @json_decode($body, true);
+
+        if (! $data) {
+            if ($returnJson) {
+                throw new AcmeCoreServerMalformedResponseException($request);
+            }
+
+            return $body;
+        }
+
+        return $data;
     }
 
     /**
@@ -153,7 +164,7 @@ class SecureHttpClient
     /**
      * @return string[]
      */
-    public function getLastLink()
+    public function getLastLinks()
     {
         return $this->lastResponse->getHeader('Link');
     }

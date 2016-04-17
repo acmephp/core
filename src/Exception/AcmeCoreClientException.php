@@ -9,17 +9,17 @@
  * file that was distributed with this source code.
  */
 
-namespace AcmePhp\Core\Exception\Protocol;
+namespace AcmePhp\Core\Exception;
 
 /**
- * The ACME challenge failed by time out.
+ * Error reported by the client.
  *
  * @author Titouan Galopin <galopintitouan@gmail.com>
  */
-class AcmeChallengeTimedOutException extends AcmeProtocolException
+class AcmeCoreClientException extends AcmeCoreException
 {
-    public function __construct(array $response)
+    public function __construct($message, \Exception $previous = null)
     {
-        parent::__construct(sprintf('Check challenge timed out (body: %s)', json_encode($response)));
+        parent::__construct($message, 0, $previous);
     }
 }
