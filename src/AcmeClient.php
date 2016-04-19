@@ -12,7 +12,6 @@
 namespace AcmePhp\Core;
 
 use AcmePhp\Core\Exception\AcmeCoreExceptionHandler;
-use AcmePhp\Core\Exception\Protocol\AcmeInvalidResponseException;
 use AcmePhp\Core\Http\SecureHttpClient;
 use AcmePhp\Core\Protocol\Challenge;
 use AcmePhp\Core\Protocol\ResourcesDirectory;
@@ -53,8 +52,8 @@ class AcmeClient implements AcmeClientInterface
     private $resourcesDirectory;
 
     /**
-     * @param string $directoryUrl
-     * @param KeyPair $accountKeyPair
+     * @param string               $directoryUrl
+     * @param KeyPair              $accountKeyPair
      * @param ClientInterface|null $httpClient
      */
     public function __construct($directoryUrl, KeyPair $accountKeyPair, ClientInterface $httpClient = null)
@@ -109,7 +108,7 @@ class AcmeClient implements AcmeClientInterface
      */
     protected function requestResource($method, $resource, array $payload)
     {
-        if (! $this->resourcesDirectory) {
+        if (!$this->resourcesDirectory) {
             $this->createResourcesDirectory();
         }
 

@@ -23,7 +23,7 @@ class Base64SafeEncoder
      *
      * @return string
      */
-    public static function encode($input)
+    public function encode($input)
     {
         return str_replace('=', '', strtr(base64_encode($input), '+/', '-_'));
     }
@@ -33,7 +33,7 @@ class Base64SafeEncoder
      *
      * @return string
      */
-    public static function decode($input)
+    public function decode($input)
     {
         $remainder = strlen($input) % 4;
 

@@ -11,13 +11,13 @@
 
 namespace AcmePhp\Core\Http;
 
+use AcmePhp\Core\Exception\AcmeCoreClientException;
 use AcmePhp\Core\Exception\AcmeCoreServerException;
-use AcmePhp\Core\Exception\Server\AcmeCoreServerMalformedResponseException;
+use AcmePhp\Core\Exception\Protocol\ExpectedJsonException;
 use AcmePhp\Ssl\KeyPair;
-use GuzzleHttp\Client;
+use AcmePhp\Ssl\Parser\KeyParser;
+use AcmePhp\Ssl\Signer\DataSigner;
 use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Exception\BadResponseException;
-use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use Psr\Http\Message\ResponseInterface;
@@ -30,14 +30,34 @@ use Psr\Http\Message\ResponseInterface;
 class SecureHttpClient
 {
     /**
-     * @var Client
+     * @var KeyPair
+     */
+    private $accountKeyPair;
+
+    /**
+     * @var ClientInterface
      */
     private $httpClient;
 
     /**
-     * @var KeyPair
+     * @var Base64SafeEncoder
      */
-    private $accountKeyPair;
+    private $base64Encoder;
+
+    /**
+     * @var KeyParser
+     */
+    private $keyParser;
+
+    /**
+     * @var DataSigner
+     */
+    private $dataSigner;
+
+    /**
+     * @var ServerErrorHandler
+     */
+    private $errorHandler;
 
     /**
      * @var ResponseInterface
@@ -45,13 +65,27 @@ class SecureHttpClient
     private $lastResponse;
 
     /**
-     * @param KeyPair $accountKeyPair
-     * @param ClientInterface|null $httpClient
+     * @param KeyPair            $accountKeyPair
+     * @param ClientInterface    $httpClient
+     * @param Base64SafeEncoder  $base64Encoder
+     * @param KeyParser          $keyParser
+     * @param DataSigner         $dataSigner
+     * @param ServerErrorHandler $errorHandler
      */
-    public function __construct(KeyPair $accountKeyPair, ClientInterface $httpClient = null)
-    {
+    public function __construct(
+        KeyPair $accountKeyPair,
+        ClientInterface $httpClient,
+        Base64SafeEncoder $base64Encoder,
+        KeyParser $keyParser,
+        DataSigner $dataSigner,
+        ServerErrorHandler $errorHandler
+    ) {
         $this->accountKeyPair = $accountKeyPair;
-        $this->httpClient = $httpClient ?: new Client();
+        $this->httpClient = $httpClient;
+        $this->base64Encoder = $base64Encoder;
+        $this->keyParser = $keyParser;
+        $this->dataSigner = $dataSigner;
+        $this->errorHandler = $errorHandler;
     }
 
     /**
@@ -62,33 +96,36 @@ class SecureHttpClient
      * @param array  $payload
      * @param bool   $returnJson
      *
-     * @throws BadResponseException When the ACME server returns an error HTTP status code.
-     * @throws AcmeCoreServerMalformedResponseException When the ACME server does not return valid JSON and $returnJson is true.
+     * @throws AcmeCoreServerException When the ACME server returns an error HTTP status code.
+     * @throws AcmeCoreClientException When an error occured during the request and no response was received.
+     * @throws ExpectedJsonException   When the ACME server does not return valid JSON and $returnJson is true.
      *
-     * @return array|string Array if the data is valid JSON, string otherwise.
+     * @return array|string Array of parsed JSON if $returnJson = true, string otherwise
      */
     public function signedRequest($method, $endpoint, array $payload, $returnJson = true)
     {
-        $privateKey = $this->accountKeyPair->getPrivateKey()->getResource();
-        $details = openssl_pkey_get_details($privateKey);
+        $privateKey = $this->accountKeyPair->getPrivateKey();
+        $parsedKey = $this->keyParser->parse($privateKey);
 
         $header = [
             'alg' => 'RS256',
             'jwk' => [
                 'kty' => 'RSA',
-                'n'   => Base64SafeEncoder::encode($details['rsa']['n']),
-                'e'   => Base64SafeEncoder::encode($details['rsa']['e']),
+                'n'   => $this->base64Encoder->encode($parsedKey->getDetail('n')),
+                'e'   => $this->base64Encoder->encode($parsedKey->getDetail('e')),
             ],
         ];
 
         $protected = $header;
-        $protected['nonce'] = $this->lastResponse->getHeaderLine('Replay-Nonce');
 
-        $payload = Base64SafeEncoder::encode(json_encode($payload, JSON_UNESCAPED_SLASHES));
-        $protected = Base64SafeEncoder::encode(json_encode($protected));
+        if ($this->lastResponse) {
+            $protected['nonce'] = $this->lastResponse->getHeaderLine('Replay-Nonce');
+        }
 
-        openssl_sign($protected.'.'.$payload, $signature, $privateKey, 'SHA256');
-        $signature = Base64SafeEncoder::encode($signature);
+        $protected = $this->base64Encoder->encode(json_encode($protected));
+
+        $payload = $this->base64Encoder->encode(json_encode($payload, JSON_UNESCAPED_SLASHES));
+        $signature = $this->base64Encoder->encode($this->dataSigner->signData($protected.'.'.$payload, $privateKey));
 
         $payload = [
             'header'    => $header,
@@ -101,15 +138,18 @@ class SecureHttpClient
     }
 
     /**
+     * Send a request encoded in the format defined by the ACME protocol.
+     *
      * @param string $method
      * @param string $endpoint
      * @param array  $data
      * @param bool   $returnJson
      *
-     * @throws BadResponseException When the ACME server returns an error HTTP status code.
-     * @throws AcmeCoreServerMalformedResponseException When the ACME server does not return valid JSON and $returnJson is true.
+     * @throws AcmeCoreServerException When the ACME server returns an error HTTP status code.
+     * @throws AcmeCoreClientException When an error occured during the request and no response was received.
+     * @throws ExpectedJsonException   When the ACME server does not return valid JSON and $returnJson is true.
      *
-     * @return ResponseInterface
+     * @return array|string Array of parsed JSON if $returnJson = true, string otherwise
      */
     public function unsignedRequest($method, $endpoint, array $data = null, $returnJson = true)
     {
@@ -123,26 +163,42 @@ class SecureHttpClient
 
         try {
             $this->lastResponse = $this->httpClient->send($request);
-        } catch (RequestException $exception) {
-            if ($exception->getResponse() instanceof ResponseInterface) {
+        } catch (\Exception $exception) {
+            if ($exception instanceof RequestException && $exception->getResponse() instanceof ResponseInterface) {
                 $this->lastResponse = $exception->getResponse();
+
+                throw $this->errorHandler->createAcmeExceptionForResponse($request, $this->lastResponse, $exception);
             }
 
-            throw $exception;
+            throw new AcmeCoreClientException(
+                sprintf(
+                    'An error occured during request "%s %s"',
+                    $request->getMethod(),
+                    $request->getUri()
+                ),
+                $exception
+            );
         }
 
         $body = \GuzzleHttp\Psr7\copy_to_string($this->lastResponse->getBody());
-        $data = @json_decode($body, true);
 
-        if (! $data) {
-            if ($returnJson) {
-                throw new AcmeCoreServerMalformedResponseException($request);
+        if ($returnJson) {
+            $data = @json_decode($body, true);
+
+            if (!$data) {
+                throw new ExpectedJsonException(sprintf(
+                    'ACME client excepted valid JSON as a response to request "%s %s" (given: "%s")',
+                    $request->getMethod(),
+                    $request->getUri(),
+                    RequestException::getResponseBodySummary($this->lastResponse)
+
+                ));
             }
 
-            return $body;
+            return $data;
         }
 
-        return $data;
+        return $body;
     }
 
     /**

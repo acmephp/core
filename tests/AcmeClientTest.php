@@ -13,4 +13,8 @@ namespace Tests\AcmePhp\Core;
 
 class AcmeClientTest extends \PHPUnit_Framework_TestCase
 {
+    public function testTrue()
+    {
+        $this->assertTrue(true);
+    }
 }

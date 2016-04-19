@@ -23,8 +23,10 @@ class Base64SafeEncoderTest extends \PHPUnit_Framework_TestCase
      */
     public function testEncodeAndDecode($message, $expected)
     {
-        $encoded = Base64SafeEncoder::encode($message);
-        $decoded = Base64SafeEncoder::decode($expected);
+        $encoder = new Base64SafeEncoder();
+
+        $encoded = $encoder->encode($message);
+        $decoded = $encoder->decode($expected);
 
         $this->assertEquals($expected, $encoded);
         $this->assertEquals($message, $decoded);
@@ -61,10 +63,10 @@ class Base64SafeEncoderTest extends \PHPUnit_Framework_TestCase
                 '', '',
             ],
             [
-                'foo', 'Zm9v'
+                'foo', 'Zm9v',
             ],
             [
-                'foobar', 'Zm9vYmFy'
+                'foobar', 'Zm9vYmFy',
             ],
         ];
     }
@@ -76,7 +78,8 @@ class Base64SafeEncoderTest extends \PHPUnit_Framework_TestCase
      */
     public function testBadInput($input)
     {
-        $decoded = Base64SafeEncoder::decode($input);
+        $encoder = new Base64SafeEncoder();
+        $decoded = $encoder->decode($input);
         $this->assertEquals("\00", $decoded);
     }
 

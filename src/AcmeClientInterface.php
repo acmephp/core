@@ -47,7 +47,7 @@ interface AcmeClientInterface
      * @param string $domain The domain to challenge.
      *
      * @throws AcmeChallengeNotSupportedException When the HTTP challenge is not supported by the server.
-     * @throws AcmeCoreServerException              When the ACME server returns an error HTTP status code.
+     * @throws AcmeCoreServerException            When the ACME server returns an error HTTP status code.
      *
      * @return Challenge The data returned by the Certificate Authority.
      */
@@ -68,7 +68,7 @@ interface AcmeClientInterface
      * @param int       $timeout   The timeout period.
      *
      * @throws AcmeChallengeTimedOutException When the challenge timed out.
-     * @throws AcmeCoreServerException          When the ACME server returns an error HTTP status code.
+     * @throws AcmeCoreServerException        When the ACME server returns an error HTTP status code.
      *
      * @return bool Was the check successful?
      */
