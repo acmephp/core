@@ -40,6 +40,12 @@ class ResourcesDirectory
      */
     public function __construct(array $serverResources)
     {
+        Assert::allOneOf(
+            $serverResources,
+            self::getResourcesNames(),
+            'Resource type "%s" is not supported by the ACME server (supported: %2$s)'
+        );
+
         $this->serverResources = $serverResources;
     }
 
