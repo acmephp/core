@@ -11,6 +11,9 @@
 
 namespace AcmePhp\Core;
 
+use AcmePhp\Core\Exception\AcmeCoreClientException;
+use AcmePhp\Core\Exception\AcmeCoreServerException;
+use AcmePhp\Core\Exception\Protocol\ExpectedJsonException;
 use AcmePhp\Core\Protocol\Challenge;
 use AcmePhp\Ssl\CertificateRequest;
 use AcmePhp\Ssl\CertificateResponse;
@@ -26,13 +29,14 @@ interface AcmeClientInterface
     /**
      * Register the local account KeyPair in the Certificate Authority.
      *
-     * @param string|null $email An optionnal e-mail to associate with the
-     *                           account.
+     * @param string|null $email An optionnal e-mail to associate with the account.
      *
-     * @throws AcmeCoreServerException When the ACME server returns an error HTTP status code.
+     * @throws AcmeCoreServerException When the ACME server returns an error HTTP status code
+     *                                 (the exception will be more specific if detail is provided).
+     * @throws ExpectedJsonException   When the ACME server returns JSON when the protocol excepted JSON.
+     * @throws AcmeCoreClientException When an error occured in the ACME client.
      *
-     * @return array The Certificate Authority response decoded from JSON into
-     *               an array.
+     * @return array The Certificate Authority response decoded from JSON into an array.
      */
     public function registerAccount($email = null);
 
@@ -46,8 +50,10 @@ interface AcmeClientInterface
      *
      * @param string $domain The domain to challenge.
      *
-     * @throws AcmeChallengeNotSupportedException When the HTTP challenge is not supported by the server.
-     * @throws AcmeCoreServerException            When the ACME server returns an error HTTP status code.
+     * @throws AcmeCoreServerException When the ACME server returns an error HTTP status code
+     *                                 (the exception will be more specific if detail is provided).
+     * @throws ExpectedJsonException   When the ACME server returns JSON when the protocol excepted JSON.
+     * @throws AcmeCoreClientException When an error occured in the ACME client.
      *
      * @return Challenge The data returned by the Certificate Authority.
      */
@@ -67,8 +73,10 @@ interface AcmeClientInterface
      * @param Challenge $challenge The challenge data to check.
      * @param int       $timeout   The timeout period.
      *
-     * @throws AcmeChallengeTimedOutException When the challenge timed out.
-     * @throws AcmeCoreServerException        When the ACME server returns an error HTTP status code.
+     * @throws AcmeCoreServerException When the ACME server returns an error HTTP status code
+     *                                 (the exception will be more specific if detail is provided).
+     * @throws ExpectedJsonException   When the ACME server returns JSON when the protocol excepted JSON.
+     * @throws AcmeCoreClientException When an error occured in the ACME client.
      *
      * @return bool Was the check successful?
      */
@@ -89,9 +97,12 @@ interface AcmeClientInterface
      * @param CertificateRequest $csr           The Certificate Signing Request (informations for the certificate).
      * @param int                $timeout       The timeout period.
      *
-     * @throws AcmeCoreServerException When the ACME server returns an error HTTP status code.
+     * @throws AcmeCoreServerException When the ACME server returns an error HTTP status code
+     *                                 (the exception will be more specific if detail is provided).
+     * @throws ExpectedJsonException   When the ACME server returns JSON when the protocol excepted JSON.
+     * @throws AcmeCoreClientException When an error occured in the ACME client.
      *
-     * @return CertificateResponse The certificate data to save somewhere you want.
+     * @return CertificateResponse The certificate data to save it somewhere you want.
      */
     public function requestCertificate($domain, KeyPair $domainKeyPair, CertificateRequest $csr, $timeout = 180);
 }
