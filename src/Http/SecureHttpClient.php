@@ -97,8 +97,7 @@ class SecureHttpClient
      * @param bool   $returnJson
      *
      * @throws AcmeCoreServerException When the ACME server returns an error HTTP status code.
-     * @throws AcmeCoreClientException When an error occured during the request and no response was received.
-     * @throws ExpectedJsonException   When the ACME server does not return valid JSON and $returnJson is true.
+     * @throws AcmeCoreClientException When an error occured during response parsing.
      *
      * @return array|string Array of parsed JSON if $returnJson = true, string otherwise
      */
@@ -146,8 +145,7 @@ class SecureHttpClient
      * @param bool   $returnJson
      *
      * @throws AcmeCoreServerException When the ACME server returns an error HTTP status code.
-     * @throws AcmeCoreClientException When an error occured during the request and no response was received.
-     * @throws ExpectedJsonException   When the ACME server does not return valid JSON and $returnJson is true.
+     * @throws AcmeCoreClientException When an error occured during response parsing.
      *
      * @return array|string Array of parsed JSON if $returnJson = true, string otherwise
      */
@@ -223,5 +221,37 @@ class SecureHttpClient
     public function getLastLinks()
     {
         return $this->lastResponse->getHeader('Link');
+    }
+
+    /**
+     * @return KeyPair
+     */
+    public function getAccountKeyPair()
+    {
+        return $this->accountKeyPair;
+    }
+
+    /**
+     * @return KeyParser
+     */
+    public function getKeyParser()
+    {
+        return $this->keyParser;
+    }
+
+    /**
+     * @return DataSigner
+     */
+    public function getDataSigner()
+    {
+        return $this->dataSigner;
+    }
+
+    /**
+     * @return Base64SafeEncoder
+     */
+    public function getBase64Encoder()
+    {
+        return $this->base64Encoder;
     }
 }

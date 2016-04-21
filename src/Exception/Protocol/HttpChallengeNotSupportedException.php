@@ -11,13 +11,13 @@
 
 namespace AcmePhp\Core\Exception\Protocol;
 
-use AcmePhp\Core\Exception\AcmeCoreClientException;
-
 /**
- * Error because the protocol was not respected.
- *
  * @author Titouan Galopin <galopintitouan@gmail.com>
  */
-class ProtocolException extends AcmeCoreClientException
+class HttpChallengeNotSupportedException extends ProtocolException
 {
+    public function __construct(\Exception $previous = null)
+    {
+        parent::__construct('This ACME server does not support HTTP challenge.', $previous);
+    }
 }

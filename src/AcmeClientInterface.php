@@ -13,7 +13,6 @@ namespace AcmePhp\Core;
 
 use AcmePhp\Core\Exception\AcmeCoreClientException;
 use AcmePhp\Core\Exception\AcmeCoreServerException;
-use AcmePhp\Core\Exception\Protocol\ExpectedJsonException;
 use AcmePhp\Core\Protocol\Challenge;
 use AcmePhp\Ssl\CertificateRequest;
 use AcmePhp\Ssl\CertificateResponse;
@@ -29,16 +28,16 @@ interface AcmeClientInterface
     /**
      * Register the local account KeyPair in the Certificate Authority.
      *
-     * @param string|null $email An optionnal e-mail to associate with the account.
+     * @param string|null $agreement An optionnal URI referring to a subscriber agreement or terms of service.
+     * @param string|null $email     An optionnal e-mail to associate with the account.
      *
      * @throws AcmeCoreServerException When the ACME server returns an error HTTP status code
      *                                 (the exception will be more specific if detail is provided).
-     * @throws ExpectedJsonException   When the ACME server returns JSON when the protocol excepted JSON.
-     * @throws AcmeCoreClientException When an error occured in the ACME client.
+     * @throws AcmeCoreClientException When an error occured during response parsing.
      *
      * @return array The Certificate Authority response decoded from JSON into an array.
      */
-    public function registerAccount($email = null);
+    public function registerAccount($agreement = null, $email = null);
 
     /**
      * Request challenge data for a given domain.
@@ -52,8 +51,7 @@ interface AcmeClientInterface
      *
      * @throws AcmeCoreServerException When the ACME server returns an error HTTP status code
      *                                 (the exception will be more specific if detail is provided).
-     * @throws ExpectedJsonException   When the ACME server returns JSON when the protocol excepted JSON.
-     * @throws AcmeCoreClientException When an error occured in the ACME client.
+     * @throws AcmeCoreClientException When an error occured during response parsing.
      *
      * @return Challenge The data returned by the Certificate Authority.
      */
@@ -75,8 +73,7 @@ interface AcmeClientInterface
      *
      * @throws AcmeCoreServerException When the ACME server returns an error HTTP status code
      *                                 (the exception will be more specific if detail is provided).
-     * @throws ExpectedJsonException   When the ACME server returns JSON when the protocol excepted JSON.
-     * @throws AcmeCoreClientException When an error occured in the ACME client.
+     * @throws AcmeCoreClientException When an error occured during response parsing.
      *
      * @return bool Was the check successful?
      */
@@ -99,8 +96,7 @@ interface AcmeClientInterface
      *
      * @throws AcmeCoreServerException When the ACME server returns an error HTTP status code
      *                                 (the exception will be more specific if detail is provided).
-     * @throws ExpectedJsonException   When the ACME server returns JSON when the protocol excepted JSON.
-     * @throws AcmeCoreClientException When an error occured in the ACME client.
+     * @throws AcmeCoreClientException When an error occured during response parsing.
      *
      * @return CertificateResponse The certificate data to save it somewhere you want.
      */

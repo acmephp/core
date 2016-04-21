@@ -11,13 +11,15 @@
 
 namespace AcmePhp\Core;
 
-use AcmePhp\Core\Exception\AcmeCoreExceptionHandler;
+use AcmePhp\Core\Exception\AcmeCoreClientException;
+use AcmePhp\Core\Exception\AcmeCoreServerException;
+use AcmePhp\Core\Exception\Protocol\HttpChallengeNotSupportedException;
 use AcmePhp\Core\Http\SecureHttpClient;
 use AcmePhp\Core\Protocol\Challenge;
 use AcmePhp\Core\Protocol\ResourcesDirectory;
 use AcmePhp\Ssl\CertificateRequest;
 use AcmePhp\Ssl\KeyPair;
-use GuzzleHttp\ClientInterface;
+use Webmozart\Assert\Assert;
 
 /**
  * ACME protocol client implementation.
@@ -27,49 +29,47 @@ use GuzzleHttp\ClientInterface;
 class AcmeClient implements AcmeClientInterface
 {
     /**
+     * @var SecureHttpClient
+     */
+    private $httpClient;
+
+    /**
      * @var string
      */
     private $directoryUrl;
 
     /**
-     * @var KeyPair
-     */
-    private $accountKeyPair;
-
-    /**
-     * @var SecureHttpClient
-     */
-    private $secureHttpClient;
-
-    /**
-     * @var AcmeCoreExceptionHandler
-     */
-    private $exceptionHandler;
-
-    /**
      * @var ResourcesDirectory
      */
-    private $resourcesDirectory;
+    private $directory;
 
     /**
-     * @param string               $directoryUrl
-     * @param KeyPair              $accountKeyPair
-     * @param ClientInterface|null $httpClient
+     * @param SecureHttpClient $httpClient
+     * @param string           $directoryUrl
      */
-    public function __construct($directoryUrl, KeyPair $accountKeyPair, ClientInterface $httpClient = null)
+    public function __construct(SecureHttpClient $httpClient, $directoryUrl)
     {
+        $this->httpClient = $httpClient;
         $this->directoryUrl = $directoryUrl;
-        $this->accountKeyPair = $accountKeyPair;
-        $this->secureHttpClient = new SecureHttpClient($this->accountKeyPair, $httpClient);
-        $this->exceptionHandler = new AcmeCoreExceptionHandler();
     }
 
     /**
      * {@inheritdoc}
      */
-    public function registerAccount($email = null)
+    public function registerAccount($agreement = null, $email = null)
     {
-        // TODO: Implement registerAccount() method.
+        Assert::nullOrString($agreement, 'AcmeClient::registerAccount $agreement expected a string or null. Got: %s');
+        Assert::nullOrString($email, 'AcmeClient::registerAccount $email expected a string or null. Got: %s');
+
+        $payload = [];
+        $payload['resource'] = ResourcesDirectory::NEW_REGISTRATION;
+        $payload['agreement'] = $agreement;
+
+        if ($email) {
+            $payload['contact'] = ['mailto:'.$email];
+        }
+
+        return $this->requestResource('POST', ResourcesDirectory::NEW_REGISTRATION, $payload);
     }
 
     /**
@@ -77,7 +77,47 @@ class AcmeClient implements AcmeClientInterface
      */
     public function requestChallenge($domain)
     {
-        // TODO: Implement requestChallenge() method.
+        Assert::string($domain, 'AcmeClient::requestChallenge $domain expected a string. Got: %s');
+
+        $payload = [
+            'resource'   => ResourcesDirectory::NEW_AUTHORIZATION,
+            'identifier' => [
+                'type'  => 'dns',
+                'value' => $domain,
+            ],
+        ];
+
+        $response = $this->requestResource('POST', ResourcesDirectory::NEW_AUTHORIZATION, $payload);
+
+        if (!isset($response['challenges']) || !$response['challenges']) {
+            throw new HttpChallengeNotSupportedException();
+        }
+
+        $base64encoder = $this->httpClient->getBase64Encoder();
+        $keyParser = $this->httpClient->getKeyParser();
+        $accountKeyPair = $this->httpClient->getAccountKeyPair();
+
+        $parsedKey = $keyParser->parse($accountKeyPair->getPrivateKey());
+
+        foreach ($response['challenges'] as $challenge) {
+            if ('http-01' === $challenge['type']) {
+                $token = $challenge['token'];
+
+                $header = [
+                    // This order matters
+                    'e'   => $base64encoder->encode($parsedKey->getDetail('e')),
+                    'kty' => 'RSA',
+                    'n'   => $base64encoder->encode($parsedKey->getDetail('n')),
+                ];
+
+                $payload = $token.'.'.$base64encoder->encode(hash('sha256', json_encode($header), true));
+                $location = $this->httpClient->getLastLocation();
+
+                return new Challenge($domain, $challenge['uri'], $token, $payload, $location);
+            }
+        }
+
+        throw new HttpChallengeNotSupportedException();
     }
 
     /**
@@ -97,43 +137,31 @@ class AcmeClient implements AcmeClientInterface
     }
 
     /**
-     * Send a request encoded in the format defined by the ACME protocol
-     * to the given resource (URL is found using the server resources directory).
+     * Request a resource (URL is found using ACME server directory).
      *
      * @param string $method
      * @param string $resource
      * @param array  $payload
+     * @param bool   $returnJson
+     *
+     * @throws AcmeCoreServerException When the ACME server returns an error HTTP status code.
+     * @throws AcmeCoreClientException When an error occured during response parsing.
      *
      * @return array|string
      */
-    protected function requestResource($method, $resource, array $payload)
+    protected function requestResource($method, $resource, array $payload, $returnJson = true)
     {
-        if (!$this->resourcesDirectory) {
-            $this->createResourcesDirectory();
+        if (!$this->directory) {
+            $this->directory = new ResourcesDirectory(
+                $this->httpClient->unsignedRequest('GET', $this->directoryUrl, null, true)
+            );
         }
 
-        return $this->secureHttpClient->signedRequest(
+        return $this->httpClient->signedRequest(
             $method,
-            $this->resourcesDirectory->getResourceUrl($resource),
-            $payload
+            $this->directory->getResourceUrl($resource),
+            $payload,
+            $returnJson
         );
-    }
-
-    /**
-     * Prepare this client by checking the presence of an account key pair
-     * and contacting the server to know the endpoints URLs.
-     */
-    private function createResourcesDirectory()
-    {
-        $response = $this->secureHttpClient->unsignedRequest('GET', $this->directoryUrl);
-
-        $resourcesDirectory = \GuzzleHttp\Psr7\copy_to_string($response->getBody());
-        $resourcesDirectory = @json_decode($resourcesDirectory, true);
-
-        if (!$resourcesDirectory) {
-            throw new AcmeCoreServerMalformedResponseException('GET', $this->directoryUrl, [], $response);
-        }
-
-        $this->resourcesDirectory = new ResourcesDirectory($resourcesDirectory);
     }
 }
