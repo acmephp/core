@@ -14,6 +14,7 @@ namespace AcmePhp\Core;
 use AcmePhp\Core\Exception\AcmeCoreClientException;
 use AcmePhp\Core\Exception\AcmeCoreServerException;
 use AcmePhp\Core\Exception\Protocol\HttpChallengeNotSupportedException;
+use AcmePhp\Core\Exception\Protocol\HttpChallengeTimedOutException;
 use AcmePhp\Core\Http\SecureHttpClient;
 use AcmePhp\Core\Protocol\Challenge;
 use AcmePhp\Core\Protocol\ResourcesDirectory;
@@ -58,8 +59,8 @@ class AcmeClient implements AcmeClientInterface
      */
     public function registerAccount($agreement = null, $email = null)
     {
-        Assert::nullOrString($agreement, 'AcmeClient::registerAccount $agreement expected a string or null. Got: %s');
-        Assert::nullOrString($email, 'AcmeClient::registerAccount $email expected a string or null. Got: %s');
+        Assert::nullOrString($agreement, 'registerAccount::$agreement expected a string or null. Got: %s');
+        Assert::nullOrString($email, 'registerAccount::$email expected a string or null. Got: %s');
 
         $payload = [];
         $payload['resource'] = ResourcesDirectory::NEW_REGISTRATION;
@@ -77,7 +78,7 @@ class AcmeClient implements AcmeClientInterface
      */
     public function requestChallenge($domain)
     {
-        Assert::string($domain, 'AcmeClient::requestChallenge $domain expected a string. Got: %s');
+        Assert::string($domain, 'requestChallenge::$domain expected a string. Got: %s');
 
         $payload = [
             'resource'   => ResourcesDirectory::NEW_AUTHORIZATION,
@@ -125,7 +126,36 @@ class AcmeClient implements AcmeClientInterface
      */
     public function checkChallenge(Challenge $challenge, $timeout = 180)
     {
-        // TODO: Implement checkChallenge() method.
+        Assert::integer($timeout, 'checkChallenge::$timeout expected an integer. Got: %s');
+
+        $payload = [
+            'resource'         => ResourcesDirectory::CHALLENGE,
+            'type'             => 'http-01',
+            'keyAuthorization' => $challenge->getPayload(),
+            'token'            => $challenge->getToken(),
+        ];
+
+        $response = $this->httpClient->signedRequest('POST', $challenge->getUrl(), $payload);
+
+        // Waiting loop
+        $waitingTime = 0;
+
+        while ($waitingTime < $timeout) {
+            $response = $this->httpClient->signedRequest('GET', $challenge->getLocation());
+
+            if ('pending' !== $response['status']) {
+                break;
+            }
+
+            $waitingTime++;
+            sleep(1);
+        }
+
+        if ('pending' === $response['status']) {
+            throw new HttpChallengeTimedOutException();
+        }
+
+        return $response;
     }
 
     /**

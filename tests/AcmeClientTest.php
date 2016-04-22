@@ -16,10 +16,13 @@ use AcmePhp\Core\AcmeClientInterface;
 use AcmePhp\Core\Http\Base64SafeEncoder;
 use AcmePhp\Core\Http\SecureHttpClient;
 use AcmePhp\Core\Http\ServerErrorHandler;
+use AcmePhp\Core\Protocol\Challenge;
 use AcmePhp\Ssl\Generator\KeyPairGenerator;
 use AcmePhp\Ssl\Parser\KeyParser;
 use AcmePhp\Ssl\Signer\DataSigner;
 use GuzzleHttp\Client;
+use Symfony\Component\Process\PhpExecutableFinder;
+use Symfony\Component\Process\Process;
 
 class AcmeClientTest extends \PHPUnit_Framework_TestCase
 {
@@ -62,6 +65,9 @@ class AcmeClientTest extends \PHPUnit_Framework_TestCase
 
     public function testFullProcess()
     {
+        /*
+         * Register account
+         */
         $data = $this->client->registerAccount('http://boulder:4000/terms/v1');
 
         $this->assertInternalType('array', $data);
@@ -70,11 +76,54 @@ class AcmeClientTest extends \PHPUnit_Framework_TestCase
         $this->assertArrayHasKey('initialIp', $data);
         $this->assertArrayHasKey('createdAt', $data);
 
+        /*
+         * Ask for domain challenge
+         */
         $challenge = $this->client->requestChallenge('acmephp.com');
 
         $this->assertInstanceOf('AcmePhp\\Core\\Protocol\\Challenge', $challenge);
         $this->assertEquals('acmephp.com', $challenge->getDomain());
         $this->assertContains('http://127.0.0.1:4000/acme/challenge', $challenge->getUrl());
         $this->assertContains('http://127.0.0.1:4000/acme/authz', $challenge->getLocation());
+
+        /*
+         * Challenge check
+         */
+        $process = $this->createServerProcess($challenge);
+        $process->start();
+
+        $this->assertTrue($process->isRunning());
+
+        $check = $this->client->checkChallenge($challenge);
+
+        $this->assertEquals('valid', $check['status']);
+
+        $process->stop();
+    }
+
+    private function createServerProcess(Challenge $challenge)
+    {
+        $listen = '0.0.0.0:5002';
+        $documentRoot = __DIR__.'/Fixtures/challenges';
+
+        // Create file
+        file_put_contents($documentRoot.'/.well-known/acme-challenge/'.$challenge->getToken(), $challenge->getPayload());
+
+        // Start server
+        $finder = new PhpExecutableFinder();
+
+        if (false === $binary = $finder->find()) {
+            throw new \RuntimeException('Unable to find PHP binary to start server.');
+        }
+
+        $script = implode(' ', array_map(['Symfony\Component\Process\ProcessUtils', 'escapeArgument'], [
+            $binary,
+            '-S',
+            $listen,
+            '-t',
+            $documentRoot,
+        ]));
+
+        return new Process('exec '.$script, $documentRoot, null, null, null);
     }
 }

@@ -13,6 +13,8 @@ namespace AcmePhp\Core;
 
 use AcmePhp\Core\Exception\AcmeCoreClientException;
 use AcmePhp\Core\Exception\AcmeCoreServerException;
+use AcmePhp\Core\Exception\Protocol\HttpChallengeNotSupportedException;
+use AcmePhp\Core\Exception\Protocol\HttpChallengeTimedOutException;
 use AcmePhp\Core\Protocol\Challenge;
 use AcmePhp\Ssl\CertificateRequest;
 use AcmePhp\Ssl\CertificateResponse;
@@ -49,9 +51,10 @@ interface AcmeClientInterface
      *
      * @param string $domain The domain to challenge.
      *
-     * @throws AcmeCoreServerException When the ACME server returns an error HTTP status code
-     *                                 (the exception will be more specific if detail is provided).
-     * @throws AcmeCoreClientException When an error occured during response parsing.
+     * @throws AcmeCoreServerException            When the ACME server returns an error HTTP status code
+     *                                            (the exception will be more specific if detail is provided).
+     * @throws AcmeCoreClientException            When an error occured during response parsing.
+     * @throws HttpChallengeNotSupportedException When the HTTP challenge is not supported by the server.
      *
      * @return Challenge The data returned by the Certificate Authority.
      */
@@ -71,11 +74,12 @@ interface AcmeClientInterface
      * @param Challenge $challenge The challenge data to check.
      * @param int       $timeout   The timeout period.
      *
-     * @throws AcmeCoreServerException When the ACME server returns an error HTTP status code
-     *                                 (the exception will be more specific if detail is provided).
-     * @throws AcmeCoreClientException When an error occured during response parsing.
+     * @throws AcmeCoreServerException        When the ACME server returns an error HTTP status code
+     *                                        (the exception will be more specific if detail is provided).
+     * @throws AcmeCoreClientException        When an error occured during response parsing.
+     * @throws HttpChallengeTimedOutException When the check timed out.
      *
-     * @return bool Was the check successful?
+     * @return array The decoded server response (containing the result of the check).
      */
     public function checkChallenge(Challenge $challenge, $timeout = 180);
 

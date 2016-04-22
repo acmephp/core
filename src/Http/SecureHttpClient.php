@@ -101,7 +101,7 @@ class SecureHttpClient
      *
      * @return array|string Array of parsed JSON if $returnJson = true, string otherwise
      */
-    public function signedRequest($method, $endpoint, array $payload, $returnJson = true)
+    public function signedRequest($method, $endpoint, array $payload = [], $returnJson = true)
     {
         $privateKey = $this->accountKeyPair->getPrivateKey();
         $parsedKey = $this->keyParser->parse($privateKey);
