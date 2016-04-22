@@ -17,6 +17,8 @@ use AcmePhp\Core\Http\Base64SafeEncoder;
 use AcmePhp\Core\Http\SecureHttpClient;
 use AcmePhp\Core\Http\ServerErrorHandler;
 use AcmePhp\Core\Protocol\Challenge;
+use AcmePhp\Ssl\CertificateRequest;
+use AcmePhp\Ssl\DistinguishedName;
 use AcmePhp\Ssl\Generator\KeyPairGenerator;
 use AcmePhp\Ssl\Parser\KeyParser;
 use AcmePhp\Ssl\Signer\DataSigner;
@@ -99,8 +101,24 @@ class AcmeClientTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('valid', $check['status']);
 
         $process->stop();
+
+        /*
+         * Request certificate
+         */
+        $csr = new CertificateRequest(new DistinguishedName('acmephp.com'), (new KeyPairGenerator())->generateKeyPair());
+        $response = $this->client->requestCertificate('acmephp.com', $csr);
+
+        $this->assertInstanceOf('AcmePhp\\Ssl\\CertificateResponse', $response);
+        $this->assertEquals($csr, $response->getCertificateRequest());
+        $this->assertInstanceOf('AcmePhp\\Ssl\\Certificate', $response->getCertificate());
+        $this->assertInstanceOf('AcmePhp\\Ssl\\Certificate', $response->getCertificate()->getIssuerCertificate());
     }
 
+    /**
+     * @param Challenge $challenge
+     *
+     * @return Process
+     */
     private function createServerProcess(Challenge $challenge)
     {
         $listen = '0.0.0.0:5002';

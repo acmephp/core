@@ -13,13 +13,17 @@ namespace AcmePhp\Core;
 
 use AcmePhp\Core\Exception\AcmeCoreClientException;
 use AcmePhp\Core\Exception\AcmeCoreServerException;
+use AcmePhp\Core\Exception\Protocol\CertificateRequestFailedException;
+use AcmePhp\Core\Exception\Protocol\CertificateRequestTimedOutException;
 use AcmePhp\Core\Exception\Protocol\HttpChallengeNotSupportedException;
 use AcmePhp\Core\Exception\Protocol\HttpChallengeTimedOutException;
 use AcmePhp\Core\Http\SecureHttpClient;
 use AcmePhp\Core\Protocol\Challenge;
 use AcmePhp\Core\Protocol\ResourcesDirectory;
+use AcmePhp\Ssl\Certificate;
 use AcmePhp\Ssl\CertificateRequest;
-use AcmePhp\Ssl\KeyPair;
+use AcmePhp\Ssl\CertificateResponse;
+use AcmePhp\Ssl\Signer\CertificateRequestSigner;
 use Webmozart\Assert\Assert;
 
 /**
@@ -35,6 +39,11 @@ class AcmeClient implements AcmeClientInterface
     private $httpClient;
 
     /**
+     * @var CertificateRequestSigner
+     */
+    private $csrSigner;
+
+    /**
      * @var string
      */
     private $directoryUrl;
@@ -45,13 +54,15 @@ class AcmeClient implements AcmeClientInterface
     private $directory;
 
     /**
-     * @param SecureHttpClient $httpClient
-     * @param string           $directoryUrl
+     * @param SecureHttpClient              $httpClient
+     * @param string                        $directoryUrl
+     * @param CertificateRequestSigner|null $csrSigner
      */
-    public function __construct(SecureHttpClient $httpClient, $directoryUrl)
+    public function __construct(SecureHttpClient $httpClient, $directoryUrl, CertificateRequestSigner $csrSigner = null)
     {
         $this->httpClient = $httpClient;
         $this->directoryUrl = $directoryUrl;
+        $this->csrSigner = $csrSigner ?: new CertificateRequestSigner();
     }
 
     /**
@@ -161,9 +172,73 @@ class AcmeClient implements AcmeClientInterface
     /**
      * {@inheritdoc}
      */
-    public function requestCertificate($domain, KeyPair $domainKeyPair, CertificateRequest $csr, $timeout = 180)
+    public function requestCertificate($domain, CertificateRequest $csr, $timeout = 180)
     {
-        // TODO: Implement requestCertificate() method.
+        Assert::stringNotEmpty($domain, 'requestCertificate::$domain expected a non-empty string. Got: %s');
+        Assert::integer($timeout, 'requestCertificate::$timeout expected an integer. Got: %s');
+
+        $humanText = ['-----BEGIN CERTIFICATE REQUEST-----', '-----END CERTIFICATE REQUEST-----'];
+
+        $csrContent = $this->csrSigner->signCertificateRequest($csr);
+        $csrContent = trim(str_replace($humanText, '', $csrContent));
+        $csrContent = trim($this->httpClient->getBase64Encoder()->encode(base64_decode($csrContent)));
+
+        $response = $this->requestResource('POST', ResourcesDirectory::NEW_CERTIFICATE, [
+            'resource' => ResourcesDirectory::NEW_CERTIFICATE,
+            'csr'      => $csrContent,
+        ], false);
+
+        // If the CA has not yet issued the certificate, the body of this response will be empty
+        if (strlen(trim($response)) < 10) { // 10 to avoid false results
+            $location = $this->httpClient->getLastLocation();
+
+            // Waiting loop
+            $waitingTime = 0;
+
+            while ($waitingTime < $timeout) {
+                $response = $this->httpClient->unsignedRequest('GET', $location, null, false);
+
+                if (200 === $this->httpClient->getLastCode()) {
+                    break;
+                }
+
+                if (202 !== $this->httpClient->getLastCode()) {
+                    throw new CertificateRequestFailedException($response);
+                }
+
+                $waitingTime++;
+                sleep(1);
+            }
+
+            if (202 === $this->httpClient->getLastCode()) {
+                throw new CertificateRequestTimedOutException($response);
+            }
+        }
+
+        // Find issuers certificate
+        $certificatesChain = null;
+
+        foreach ($this->httpClient->getLastLinks() as $link) {
+            if (!isset($link['rel']) || 'up' !== $link['rel']) {
+                continue;
+            }
+
+            $location = substr($link[0], 1, -1);
+            $certificate = $this->httpClient->unsignedRequest('GET', $location, null, false);
+
+            if (strlen(trim($certificate)) > 10) {
+                $pem = chunk_split(base64_encode($certificate), 64, "\n");
+                $pem = "-----BEGIN CERTIFICATE-----\n".$pem."-----END CERTIFICATE-----\n";
+
+                $certificatesChain = new Certificate($pem, $certificatesChain);
+            }
+        }
+
+        // Domain certificate
+        $pem = chunk_split(base64_encode($response), 64, "\n");
+        $pem = "-----BEGIN CERTIFICATE-----\n".$pem."-----END CERTIFICATE-----\n";
+
+        return new CertificateResponse($csr, new Certificate($pem, $certificatesChain));
     }
 
     /**

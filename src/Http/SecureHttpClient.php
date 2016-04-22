@@ -216,11 +216,11 @@ class SecureHttpClient
     }
 
     /**
-     * @return string[]
+     * @return array
      */
     public function getLastLinks()
     {
-        return $this->lastResponse->getHeader('Link');
+        return \GuzzleHttp\Psr7\parse_header($this->lastResponse->getHeader('Link'));
     }
 
     /**

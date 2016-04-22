@@ -13,6 +13,8 @@ namespace AcmePhp\Core;
 
 use AcmePhp\Core\Exception\AcmeCoreClientException;
 use AcmePhp\Core\Exception\AcmeCoreServerException;
+use AcmePhp\Core\Exception\Protocol\CertificateRequestFailedException;
+use AcmePhp\Core\Exception\Protocol\CertificateRequestTimedOutException;
 use AcmePhp\Core\Exception\Protocol\HttpChallengeNotSupportedException;
 use AcmePhp\Core\Exception\Protocol\HttpChallengeTimedOutException;
 use AcmePhp\Core\Protocol\Challenge;
@@ -93,16 +95,17 @@ interface AcmeClientInterface
      * wait for the Certificate Authority to validate the certificate and
      * this operation could be long.
      *
-     * @param string             $domain        The domain to request a certificate for.
-     * @param KeyPair            $domainKeyPair The domain SSL KeyPair to use (for renewal).
-     * @param CertificateRequest $csr           The Certificate Signing Request (informations for the certificate).
-     * @param int                $timeout       The timeout period.
+     * @param string             $domain  The domain to request a certificate for.
+     * @param CertificateRequest $csr     The Certificate Signing Request (informations for the certificate).
+     * @param int                $timeout The timeout period.
      *
-     * @throws AcmeCoreServerException When the ACME server returns an error HTTP status code
-     *                                 (the exception will be more specific if detail is provided).
-     * @throws AcmeCoreClientException When an error occured during response parsing.
+     * @throws AcmeCoreServerException             When the ACME server returns an error HTTP status code
+     *                                             (the exception will be more specific if detail is provided).
+     * @throws AcmeCoreClientException             When an error occured during response parsing.
+     * @throws CertificateRequestFailedException   When the certificate request failed.
+     * @throws CertificateRequestTimedOutException When the certificate request timed out.
      *
      * @return CertificateResponse The certificate data to save it somewhere you want.
      */
-    public function requestCertificate($domain, KeyPair $domainKeyPair, CertificateRequest $csr, $timeout = 180);
+    public function requestCertificate($domain, CertificateRequest $csr, $timeout = 180);
 }
