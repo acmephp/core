@@ -18,7 +18,7 @@ use AcmePhp\Core\Exception\Protocol\CertificateRequestTimedOutException;
 use AcmePhp\Core\Exception\Protocol\HttpChallengeNotSupportedException;
 use AcmePhp\Core\Exception\Protocol\HttpChallengeTimedOutException;
 use AcmePhp\Core\Http\SecureHttpClient;
-use AcmePhp\Core\Protocol\Challenge;
+use AcmePhp\Core\Protocol\AuthorizationChallenge;
 use AcmePhp\Core\Protocol\ResourcesDirectory;
 use AcmePhp\Ssl\Certificate;
 use AcmePhp\Ssl\CertificateRequest;
@@ -87,7 +87,7 @@ class AcmeClient implements AcmeClientInterface
     /**
      * {@inheritdoc}
      */
-    public function requestChallenge($domain)
+    public function requestAuthorization($domain)
     {
         Assert::string($domain, 'requestChallenge::$domain expected a string. Got: %s');
 
@@ -125,7 +125,7 @@ class AcmeClient implements AcmeClientInterface
                 $payload = $token.'.'.$base64encoder->encode(hash('sha256', json_encode($header), true));
                 $location = $this->httpClient->getLastLocation();
 
-                return new Challenge($domain, $challenge['uri'], $token, $payload, $location);
+                return new AuthorizationChallenge($domain, $challenge['uri'], $token, $payload, $location);
             }
         }
 
@@ -135,7 +135,7 @@ class AcmeClient implements AcmeClientInterface
     /**
      * {@inheritdoc}
      */
-    public function checkChallenge(Challenge $challenge, $timeout = 180)
+    public function challengeAuthorization(AuthorizationChallenge $challenge, $timeout = 180)
     {
         Assert::integer($timeout, 'checkChallenge::$timeout expected an integer. Got: %s');
 

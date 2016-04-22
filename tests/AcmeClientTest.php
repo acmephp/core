@@ -16,7 +16,7 @@ use AcmePhp\Core\AcmeClientInterface;
 use AcmePhp\Core\Http\Base64SafeEncoder;
 use AcmePhp\Core\Http\SecureHttpClient;
 use AcmePhp\Core\Http\ServerErrorHandler;
-use AcmePhp\Core\Protocol\Challenge;
+use AcmePhp\Core\Protocol\AuthorizationChallenge;
 use AcmePhp\Ssl\CertificateRequest;
 use AcmePhp\Ssl\DistinguishedName;
 use AcmePhp\Ssl\Generator\KeyPairGenerator;
@@ -62,7 +62,7 @@ class AcmeClientTest extends \PHPUnit_Framework_TestCase
     public function testInvalidAgreement()
     {
         $this->client->registerAccount('http://invalid.com');
-        $this->client->requestChallenge('example.org');
+        $this->client->requestAuthorization('example.org');
     }
 
     public function testFullProcess()
@@ -81,9 +81,9 @@ class AcmeClientTest extends \PHPUnit_Framework_TestCase
         /*
          * Ask for domain challenge
          */
-        $challenge = $this->client->requestChallenge('acmephp.com');
+        $challenge = $this->client->requestAuthorization('acmephp.com');
 
-        $this->assertInstanceOf('AcmePhp\\Core\\Protocol\\Challenge', $challenge);
+        $this->assertInstanceOf('AcmePhp\\Core\\Protocol\\AuthorizationChallenge', $challenge);
         $this->assertEquals('acmephp.com', $challenge->getDomain());
         $this->assertContains('http://127.0.0.1:4000/acme/challenge', $challenge->getUrl());
         $this->assertContains('http://127.0.0.1:4000/acme/authz', $challenge->getLocation());
@@ -96,7 +96,7 @@ class AcmeClientTest extends \PHPUnit_Framework_TestCase
 
         $this->assertTrue($process->isRunning());
 
-        $check = $this->client->checkChallenge($challenge);
+        $check = $this->client->challengeAuthorization($challenge);
 
         $this->assertEquals('valid', $check['status']);
 
@@ -115,11 +115,11 @@ class AcmeClientTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @param Challenge $challenge
+     * @param AuthorizationChallenge $challenge
      *
      * @return Process
      */
-    private function createServerProcess(Challenge $challenge)
+    private function createServerProcess(AuthorizationChallenge $challenge)
     {
         $listen = '0.0.0.0:5002';
         $documentRoot = __DIR__.'/Fixtures/challenges';

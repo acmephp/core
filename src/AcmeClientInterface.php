@@ -17,7 +17,7 @@ use AcmePhp\Core\Exception\Protocol\CertificateRequestFailedException;
 use AcmePhp\Core\Exception\Protocol\CertificateRequestTimedOutException;
 use AcmePhp\Core\Exception\Protocol\HttpChallengeNotSupportedException;
 use AcmePhp\Core\Exception\Protocol\HttpChallengeTimedOutException;
-use AcmePhp\Core\Protocol\Challenge;
+use AcmePhp\Core\Protocol\AuthorizationChallenge;
 use AcmePhp\Ssl\CertificateRequest;
 use AcmePhp\Ssl\CertificateResponse;
 use AcmePhp\Ssl\KeyPair;
@@ -58,9 +58,9 @@ interface AcmeClientInterface
      * @throws AcmeCoreClientException            When an error occured during response parsing.
      * @throws HttpChallengeNotSupportedException When the HTTP challenge is not supported by the server.
      *
-     * @return Challenge The data returned by the Certificate Authority.
+     * @return AuthorizationChallenge The data returned by the Certificate Authority.
      */
-    public function requestChallenge($domain);
+    public function requestAuthorization($domain);
 
     /**
      * Ask the Certificate Authority to check given challenge data.
@@ -73,7 +73,7 @@ interface AcmeClientInterface
      * wait for the Certificate Authority to validate the check and this
      * operation could be long.
      *
-     * @param Challenge $challenge The challenge data to check.
+     * @param AuthorizationChallenge $challenge The challenge data to check.
      * @param int       $timeout   The timeout period.
      *
      * @throws AcmeCoreServerException        When the ACME server returns an error HTTP status code
@@ -83,7 +83,7 @@ interface AcmeClientInterface
      *
      * @return array The decoded server response (containing the result of the check).
      */
-    public function checkChallenge(Challenge $challenge, $timeout = 180);
+    public function challengeAuthorization(AuthorizationChallenge $challenge, $timeout = 180);
 
     /**
      * Request a certificate for the given domain.

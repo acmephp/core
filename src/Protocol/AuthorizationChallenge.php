@@ -18,7 +18,7 @@ use Webmozart\Assert\Assert;
  *
  * @author Titouan Galopin <galopintitouan@gmail.com>
  */
-class Challenge
+class AuthorizationChallenge
 {
     /**
      * @var string
@@ -83,7 +83,7 @@ class Challenge
     /**
      * @param array $data
      *
-     * @return Challenge
+     * @return AuthorizationChallenge
      */
     public static function fromArray(array $data)
     {
