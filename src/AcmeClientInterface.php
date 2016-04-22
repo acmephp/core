@@ -15,12 +15,12 @@ use AcmePhp\Core\Exception\AcmeCoreClientException;
 use AcmePhp\Core\Exception\AcmeCoreServerException;
 use AcmePhp\Core\Exception\Protocol\CertificateRequestFailedException;
 use AcmePhp\Core\Exception\Protocol\CertificateRequestTimedOutException;
+use AcmePhp\Core\Exception\Protocol\HttpChallengeFailedException;
 use AcmePhp\Core\Exception\Protocol\HttpChallengeNotSupportedException;
 use AcmePhp\Core\Exception\Protocol\HttpChallengeTimedOutException;
 use AcmePhp\Core\Protocol\AuthorizationChallenge;
 use AcmePhp\Ssl\CertificateRequest;
 use AcmePhp\Ssl\CertificateResponse;
-use AcmePhp\Ssl\KeyPair;
 
 /**
  * ACME protocol client interface.
@@ -44,12 +44,11 @@ interface AcmeClientInterface
     public function registerAccount($agreement = null, $email = null);
 
     /**
-     * Request challenge data for a given domain.
+     * Request authorization challenge data for a given domain.
      *
-     * A Challenge is an association between a URI, a token and a payload.
-     * The Certificate Authority will create this challenge data and
-     * you will then have to expose the payload for the verification
-     * (see requestCheck).
+     * An AuthorizationChallenge is an association between a URI, a token and a payload.
+     * The Certificate Authority will create this challenge data and you will then have
+     * to expose the payload for the verification (see challengeAuthorization).
      *
      * @param string $domain The domain to challenge.
      *
@@ -63,23 +62,24 @@ interface AcmeClientInterface
     public function requestAuthorization($domain);
 
     /**
-     * Ask the Certificate Authority to check given challenge data.
+     * Ask the Certificate Authority to challenge a given authorization.
      *
      * This check will generally consists of requesting over HTTP the domain
      * at a specific URL. This URL should return the raw payload generated
-     * by requestChallenge.
+     * by requestAuthorization.
      *
      * WARNING : This method SHOULD NOT BE USED in a web action. It will
-     * wait for the Certificate Authority to validate the check and this
+     * wait for the Certificate Authority to validate the challenge and this
      * operation could be long.
      *
      * @param AuthorizationChallenge $challenge The challenge data to check.
-     * @param int       $timeout   The timeout period.
+     * @param int                    $timeout   The timeout period.
      *
      * @throws AcmeCoreServerException        When the ACME server returns an error HTTP status code
      *                                        (the exception will be more specific if detail is provided).
      * @throws AcmeCoreClientException        When an error occured during response parsing.
-     * @throws HttpChallengeTimedOutException When the check timed out.
+     * @throws HttpChallengeTimedOutException When the challenge timed out.
+     * @throws HttpChallengeFailedException   When the challenge failed.
      *
      * @return array The decoded server response (containing the result of the check).
      */
@@ -88,8 +88,8 @@ interface AcmeClientInterface
     /**
      * Request a certificate for the given domain.
      *
-     * This method should be called only if the previous check challenge has
-     * been successful.
+     * This method should be called only if a previous authorization challenge has
+     * been successful for the asked domain.
      *
      * WARNING : This method SHOULD NOT BE USED in a web action. It will
      * wait for the Certificate Authority to validate the certificate and

@@ -15,6 +15,7 @@ use AcmePhp\Core\Exception\AcmeCoreClientException;
 use AcmePhp\Core\Exception\AcmeCoreServerException;
 use AcmePhp\Core\Exception\Protocol\CertificateRequestFailedException;
 use AcmePhp\Core\Exception\Protocol\CertificateRequestTimedOutException;
+use AcmePhp\Core\Exception\Protocol\HttpChallengeFailedException;
 use AcmePhp\Core\Exception\Protocol\HttpChallengeNotSupportedException;
 use AcmePhp\Core\Exception\Protocol\HttpChallengeTimedOutException;
 use AcmePhp\Core\Http\SecureHttpClient;
@@ -163,7 +164,9 @@ class AcmeClient implements AcmeClientInterface
         }
 
         if ('pending' === $response['status']) {
-            throw new HttpChallengeTimedOutException();
+            throw new HttpChallengeTimedOutException($response);
+        } elseif ('invalid' === $response['status']) {
+            throw new HttpChallengeFailedException($response);
         }
 
         return $response;
