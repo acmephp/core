@@ -112,22 +112,27 @@ class AcmeClient implements AcmeClientInterface
 
         $parsedKey = $keyParser->parse($accountKeyPair->getPrivateKey());
 
+        $header = json_encode([
+            // This order matters
+            'e'   => $base64encoder->encode($parsedKey->getDetail('e')),
+            'kty' => 'RSA',
+            'n'   => $base64encoder->encode($parsedKey->getDetail('n')),
+        ]);
+
+        $encodedHeader = $base64encoder->encode(hash('sha256', $header, true));
+
         foreach ($response['challenges'] as $challenge) {
-            if ('http-01' === $challenge['type']) {
-                $token = $challenge['token'];
-
-                $header = [
-                    // This order matters
-                    'e'   => $base64encoder->encode($parsedKey->getDetail('e')),
-                    'kty' => 'RSA',
-                    'n'   => $base64encoder->encode($parsedKey->getDetail('n')),
-                ];
-
-                $payload = $token.'.'.$base64encoder->encode(hash('sha256', json_encode($header), true));
-                $location = $this->httpClient->getLastLocation();
-
-                return new AuthorizationChallenge($domain, $challenge['uri'], $token, $payload, $location);
+            if ('http-01' !== $challenge['type']) {
+                continue;
             }
+
+            return new AuthorizationChallenge(
+                $domain,
+                $challenge['uri'],
+                $challenge['token'],
+                $challenge['token'].'.'.$encodedHeader,
+                $this->httpClient->getLastLocation()
+            );
         }
 
         throw new HttpChallengeNotSupportedException();
@@ -150,22 +155,21 @@ class AcmeClient implements AcmeClientInterface
         $response = $this->httpClient->signedRequest('POST', $challenge->getUrl(), $payload);
 
         // Waiting loop
-        $waitingTime = 0;
+        $endTime = time() + $timeout;
 
-        while ($waitingTime < $timeout) {
+        while (time() <= $endTime) {
             $response = $this->httpClient->signedRequest('GET', $challenge->getLocation());
 
             if ('pending' !== $response['status']) {
                 break;
             }
 
-            $waitingTime++;
             sleep(1);
         }
 
         if ('pending' === $response['status']) {
             throw new HttpChallengeTimedOutException($response);
-        } elseif ('invalid' === $response['status']) {
+        } elseif ('valid' !== $response['status']) {
             throw new HttpChallengeFailedException($response);
         }
 
@@ -196,9 +200,9 @@ class AcmeClient implements AcmeClientInterface
             $location = $this->httpClient->getLastLocation();
 
             // Waiting loop
-            $waitingTime = 0;
+            $endTime = time() + $timeout;
 
-            while ($waitingTime < $timeout) {
+            while (time() <= $endTime) {
                 $response = $this->httpClient->unsignedRequest('GET', $location, null, false);
 
                 if (200 === $this->httpClient->getLastCode()) {
@@ -209,7 +213,6 @@ class AcmeClient implements AcmeClientInterface
                     throw new CertificateRequestFailedException($response);
                 }
 
-                $waitingTime++;
                 sleep(1);
             }
 
@@ -219,14 +222,15 @@ class AcmeClient implements AcmeClientInterface
         }
 
         // Find issuers certificate
+        $links = $this->httpClient->getLastLinks();
         $certificatesChain = null;
 
-        foreach ($this->httpClient->getLastLinks() as $link) {
+        foreach ($links as $link) {
             if (!isset($link['rel']) || 'up' !== $link['rel']) {
                 continue;
             }
 
-            $location = substr($link[0], 1, -1);
+            $location = trim($link[0], '<>');
             $certificate = $this->httpClient->unsignedRequest('GET', $location, null, false);
 
             if (strlen(trim($certificate)) > 10) {

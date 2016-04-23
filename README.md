@@ -4,7 +4,7 @@ Acme PHP Core
 [![Build Status](https://travis-ci.org/acmephp/core.svg?branch=master)](https://travis-ci.org/acmephp/core)
 [![StyleCI](https://styleci.io/repos/51226077/shield)](https://styleci.io/repos/51226077)
 
-> Note : this repository is in development
+> Note : this repository is alpha stage
 
 The ACME protocol is a protocol defined by the Let's Encrypt Certificate Authority.
 You can see the complete specification on https://letsencrypt.github.io/acme-spec/.

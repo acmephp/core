@@ -14,6 +14,7 @@ namespace Tests\AcmePhp\Core\Http;
 use AcmePhp\Core\Exception\AcmeCoreException;
 use AcmePhp\Core\Http\Base64SafeEncoder;
 use AcmePhp\Core\Http\SecureHttpClient;
+use AcmePhp\Core\Http\ServerErrorHandler;
 use AcmePhp\Ssl\Generator\KeyPairGenerator;
 use AcmePhp\Ssl\Parser\KeyParser;
 use AcmePhp\Ssl\Signer\DataSigner;
@@ -37,7 +38,7 @@ class SecureHttpClientTest extends \PHPUnit_Framework_TestCase
         $keyPairGenerator = new KeyPairGenerator();
         $httpClient = new Client(['handler' => HandlerStack::create(new MockHandler($responses))]);
 
-        $errorHandler = $this->getMockBuilder('AcmePhp\\Core\\Http\\ServerErrorHandler')->getMock();
+        $errorHandler = $this->getMockBuilder(ServerErrorHandler::class)->getMock();
 
         if ($willThrow) {
             $errorHandler->expects($this->once())
@@ -110,7 +111,7 @@ class SecureHttpClientTest extends \PHPUnit_Framework_TestCase
 
         $keyPairGenerator = new KeyPairGenerator();
 
-        $dataSigner = $this->getMockBuilder('AcmePhp\\Ssl\\Signer\\DataSigner')->getMock();
+        $dataSigner = $this->getMockBuilder(DataSigner::class)->getMock();
         $dataSigner->expects($this->once())
             ->method('signData')
             ->willReturn('foobar');
@@ -121,7 +122,7 @@ class SecureHttpClientTest extends \PHPUnit_Framework_TestCase
             new Base64SafeEncoder(),
             new KeyParser(),
             $dataSigner,
-            $this->getMockBuilder('AcmePhp\\Core\\Http\\ServerErrorHandler')->getMock()
+            $this->getMockBuilder(ServerErrorHandler::class)->getMock()
         );
 
         $client->signedRequest('POST', '/acme/new-reg', ['contact' => 'foo@bar.com'], true);
@@ -132,7 +133,7 @@ class SecureHttpClientTest extends \PHPUnit_Framework_TestCase
         /** @var RequestInterface $request */
         $request = $container[0]['request'];
 
-        $this->assertInstanceOf('Psr\\Http\\Message\\RequestInterface', $request);
+        $this->assertInstanceOf(RequestInterface::class, $request);
         $this->assertEquals('POST', $request->getMethod());
         $this->assertEquals('/acme/new-reg', $request->getUri());
 

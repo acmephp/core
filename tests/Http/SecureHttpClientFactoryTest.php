@@ -12,6 +12,7 @@
 namespace Tests\AcmePhp\Core\Http;
 
 use AcmePhp\Core\Http\Base64SafeEncoder;
+use AcmePhp\Core\Http\SecureHttpClient;
 use AcmePhp\Core\Http\SecureHttpClientFactory;
 use AcmePhp\Core\Http\ServerErrorHandler;
 use AcmePhp\Ssl\Generator\KeyPairGenerator;
@@ -38,7 +39,7 @@ class SecureHttpClientFactoryTest extends \PHPUnit_Framework_TestCase
 
         $client = $factory->createSecureHttpClient($keyPair);
 
-        $this->assertInstanceOf('AcmePhp\\Core\\Http\\SecureHttpClient', $client);
+        $this->assertInstanceOf(SecureHttpClient::class, $client);
         $this->assertEquals($base64Encoder, $client->getBase64Encoder());
         $this->assertEquals($keyParser, $client->getKeyParser());
         $this->assertEquals($dataSigner, $client->getDataSigner());

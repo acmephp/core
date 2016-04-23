@@ -188,8 +188,7 @@ class SecureHttpClient
                     'ACME client excepted valid JSON as a response to request "%s %s" (given: "%s")',
                     $request->getMethod(),
                     $request->getUri(),
-                    RequestException::getResponseBodySummary($this->lastResponse)
-
+                    ServerErrorHandler::getResponseBodySummary($this->lastResponse)
                 ));
             }
 

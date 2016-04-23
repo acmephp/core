@@ -24,7 +24,6 @@ matrix:
 before_install:
     - docker run -d --name boulder --net host acmephp/testing-ca
     - phpenv config-rm xdebug.ini
-    - composer global require hirak/prestissimo
 
 install:
     - composer update --no-interaction --prefer-dist $COMPOSER_FLAGS

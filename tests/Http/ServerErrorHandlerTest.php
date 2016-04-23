@@ -11,6 +11,17 @@
 
 namespace Tests\AcmePhp\Core\Http;
 
+use AcmePhp\Core\Exception\AcmeCoreServerException;
+use AcmePhp\Core\Exception\Server\BadCsrServerException;
+use AcmePhp\Core\Exception\Server\BadNonceServerException;
+use AcmePhp\Core\Exception\Server\ConnectionServerException;
+use AcmePhp\Core\Exception\Server\InternalServerException;
+use AcmePhp\Core\Exception\Server\InvalidEmailServerException;
+use AcmePhp\Core\Exception\Server\MalformedServerException;
+use AcmePhp\Core\Exception\Server\RateLimitedServerException;
+use AcmePhp\Core\Exception\Server\TlsServerException;
+use AcmePhp\Core\Exception\Server\UnauthorizedServerException;
+use AcmePhp\Core\Exception\Server\UnknownHostServerException;
 use AcmePhp\Core\Http\ServerErrorHandler;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
@@ -20,16 +31,16 @@ class ServerErrorHandlerTest extends \PHPUnit_Framework_TestCase
     public function getErrorTypes()
     {
         return [
-            ['badCSR', 'BadCsrServerException'],
-            ['badNonce', 'BadNonceServerException'],
-            ['connection', 'ConnectionServerException'],
-            ['serverInternal', 'InternalServerException'],
-            ['invalidEmail', 'InvalidEmailServerException'],
-            ['malformed', 'MalformedServerException'],
-            ['rateLimited', 'RateLimitedServerException'],
-            ['tls', 'TlsServerException'],
-            ['unauthorized', 'UnauthorizedServerException'],
-            ['unknownHost', 'UnknownHostServerException'],
+            ['badCSR', BadCsrServerException::class],
+            ['badNonce', BadNonceServerException::class],
+            ['connection', ConnectionServerException::class],
+            ['serverInternal', InternalServerException::class],
+            ['invalidEmail', InvalidEmailServerException::class],
+            ['malformed', MalformedServerException::class],
+            ['rateLimited', RateLimitedServerException::class],
+            ['tls', TlsServerException::class],
+            ['unauthorized', UnauthorizedServerException::class],
+            ['unknownHost', UnknownHostServerException::class],
         ];
     }
 
@@ -47,7 +58,7 @@ class ServerErrorHandlerTest extends \PHPUnit_Framework_TestCase
 
         $exception = $errorHandler->createAcmeExceptionForResponse(new Request('GET', '/foo/bar'), $response);
 
-        $this->assertInstanceOf('AcmePhp\\Core\\Exception\\Server\\'.$exceptionClass, $exception);
+        $this->assertInstanceOf($exceptionClass, $exception);
         $this->assertContains($type, $exception->getMessage());
         $this->assertContains($exceptionClass.'Detail', $exception->getMessage());
         $this->assertContains('/foo/bar', $exception->getMessage());
@@ -62,7 +73,7 @@ class ServerErrorHandlerTest extends \PHPUnit_Framework_TestCase
             new Response(500, [], 'Invalid JSON')
         );
 
-        $this->assertInstanceOf('AcmePhp\\Core\\Exception\\AcmeCoreServerException', $exception);
+        $this->assertInstanceOf(AcmeCoreServerException::class, $exception);
         $this->assertContains('non-ACME', $exception->getMessage());
         $this->assertContains('/foo/bar', $exception->getMessage());
     }
@@ -76,7 +87,7 @@ class ServerErrorHandlerTest extends \PHPUnit_Framework_TestCase
             new Response(500, [], json_encode(['not' => 'acme']))
         );
 
-        $this->assertInstanceOf('AcmePhp\\Core\\Exception\\AcmeCoreServerException', $exception);
+        $this->assertInstanceOf(AcmeCoreServerException::class, $exception);
         $this->assertContains('non-ACME', $exception->getMessage());
         $this->assertContains('/foo/bar', $exception->getMessage());
     }

@@ -17,7 +17,9 @@ use AcmePhp\Core\Http\Base64SafeEncoder;
 use AcmePhp\Core\Http\SecureHttpClient;
 use AcmePhp\Core\Http\ServerErrorHandler;
 use AcmePhp\Core\Protocol\AuthorizationChallenge;
+use AcmePhp\Ssl\Certificate;
 use AcmePhp\Ssl\CertificateRequest;
+use AcmePhp\Ssl\CertificateResponse;
 use AcmePhp\Ssl\DistinguishedName;
 use AcmePhp\Ssl\Generator\KeyPairGenerator;
 use AcmePhp\Ssl\Parser\KeyParser;
@@ -83,7 +85,7 @@ class AcmeClientTest extends \PHPUnit_Framework_TestCase
          */
         $challenge = $this->client->requestAuthorization('acmephp.com');
 
-        $this->assertInstanceOf('AcmePhp\\Core\\Protocol\\AuthorizationChallenge', $challenge);
+        $this->assertInstanceOf(AuthorizationChallenge::class, $challenge);
         $this->assertEquals('acmephp.com', $challenge->getDomain());
         $this->assertContains('http://127.0.0.1:4000/acme/challenge', $challenge->getUrl());
         $this->assertContains('http://127.0.0.1:4000/acme/authz', $challenge->getLocation());
@@ -96,11 +98,12 @@ class AcmeClientTest extends \PHPUnit_Framework_TestCase
 
         $this->assertTrue($process->isRunning());
 
-        $check = $this->client->challengeAuthorization($challenge);
-
-        $this->assertEquals('valid', $check['status']);
-
-        $process->stop();
+        try {
+            $check = $this->client->challengeAuthorization($challenge);
+            $this->assertEquals('valid', $check['status']);
+        } finally {
+            $process->stop();
+        }
 
         /*
          * Request certificate
@@ -108,10 +111,10 @@ class AcmeClientTest extends \PHPUnit_Framework_TestCase
         $csr = new CertificateRequest(new DistinguishedName('acmephp.com'), (new KeyPairGenerator())->generateKeyPair());
         $response = $this->client->requestCertificate('acmephp.com', $csr);
 
-        $this->assertInstanceOf('AcmePhp\\Ssl\\CertificateResponse', $response);
+        $this->assertInstanceOf(CertificateResponse::class, $response);
         $this->assertEquals($csr, $response->getCertificateRequest());
-        $this->assertInstanceOf('AcmePhp\\Ssl\\Certificate', $response->getCertificate());
-        $this->assertInstanceOf('AcmePhp\\Ssl\\Certificate', $response->getCertificate()->getIssuerCertificate());
+        $this->assertInstanceOf(Certificate::class, $response->getCertificate());
+        $this->assertInstanceOf(Certificate::class, $response->getCertificate()->getIssuerCertificate());
     }
 
     /**
