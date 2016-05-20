@@ -11,79 +11,269 @@
 
 namespace AcmePhp\Core;
 
-use AcmePhp\Core\Ssl\KeyPair;
-use Psr\Log\LoggerInterface;
+use AcmePhp\Core\Exception\AcmeCoreClientException;
+use AcmePhp\Core\Exception\AcmeCoreServerException;
+use AcmePhp\Core\Exception\Protocol\CertificateRequestFailedException;
+use AcmePhp\Core\Exception\Protocol\CertificateRequestTimedOutException;
+use AcmePhp\Core\Exception\Protocol\HttpChallengeFailedException;
+use AcmePhp\Core\Exception\Protocol\HttpChallengeNotSupportedException;
+use AcmePhp\Core\Exception\Protocol\HttpChallengeTimedOutException;
+use AcmePhp\Core\Http\SecureHttpClient;
+use AcmePhp\Core\Protocol\AuthorizationChallenge;
+use AcmePhp\Core\Protocol\ResourcesDirectory;
+use AcmePhp\Ssl\Certificate;
+use AcmePhp\Ssl\CertificateRequest;
+use AcmePhp\Ssl\CertificateResponse;
+use AcmePhp\Ssl\Signer\CertificateRequestSigner;
+use Webmozart\Assert\Assert;
 
 /**
- * ACME generic client.
+ * ACME protocol client implementation.
  *
  * @author Titouan Galopin <galopintitouan@gmail.com>
  */
-class AcmeClient extends AbstractAcmeClient
+class AcmeClient implements AcmeClientInterface
 {
-    const VERSION = '1.0.0-alpha4';
+    /**
+     * @var SecureHttpClient
+     */
+    private $httpClient;
+
+    /**
+     * @var CertificateRequestSigner
+     */
+    private $csrSigner;
 
     /**
      * @var string
      */
-    private $caBaseUrl;
+    private $directoryUrl;
 
     /**
-     * @var string
+     * @var ResourcesDirectory
      */
-    private $caLicense;
+    private $directory;
 
     /**
-     * @var array
+     * @param SecureHttpClient              $httpClient
+     * @param string                        $directoryUrl
+     * @param CertificateRequestSigner|null $csrSigner
      */
-    private $certificatesChain;
+    public function __construct(SecureHttpClient $httpClient, $directoryUrl, CertificateRequestSigner $csrSigner = null)
+    {
+        $this->httpClient = $httpClient;
+        $this->directoryUrl = $directoryUrl;
+        $this->csrSigner = $csrSigner ?: new CertificateRequestSigner();
+    }
 
     /**
-     * Create the client.
+     * {@inheritdoc}
+     */
+    public function registerAccount($agreement = null, $email = null)
+    {
+        Assert::nullOrString($agreement, 'registerAccount::$agreement expected a string or null. Got: %s');
+        Assert::nullOrString($email, 'registerAccount::$email expected a string or null. Got: %s');
+
+        $payload = [];
+        $payload['resource'] = ResourcesDirectory::NEW_REGISTRATION;
+        $payload['agreement'] = $agreement;
+
+        if ($email) {
+            $payload['contact'] = ['mailto:'.$email];
+        }
+
+        return $this->requestResource('POST', ResourcesDirectory::NEW_REGISTRATION, $payload);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function requestAuthorization($domain)
+    {
+        Assert::string($domain, 'requestChallenge::$domain expected a string. Got: %s');
+
+        $payload = [
+            'resource'   => ResourcesDirectory::NEW_AUTHORIZATION,
+            'identifier' => [
+                'type'  => 'dns',
+                'value' => $domain,
+            ],
+        ];
+
+        $response = $this->requestResource('POST', ResourcesDirectory::NEW_AUTHORIZATION, $payload);
+
+        if (!isset($response['challenges']) || !$response['challenges']) {
+            throw new HttpChallengeNotSupportedException();
+        }
+
+        $base64encoder = $this->httpClient->getBase64Encoder();
+        $keyParser = $this->httpClient->getKeyParser();
+        $accountKeyPair = $this->httpClient->getAccountKeyPair();
+
+        $parsedKey = $keyParser->parse($accountKeyPair->getPrivateKey());
+
+        $header = json_encode([
+            // This order matters
+            'e'   => $base64encoder->encode($parsedKey->getDetail('e')),
+            'kty' => 'RSA',
+            'n'   => $base64encoder->encode($parsedKey->getDetail('n')),
+        ]);
+
+        $encodedHeader = $base64encoder->encode(hash('sha256', $header, true));
+
+        foreach ($response['challenges'] as $challenge) {
+            if ('http-01' !== $challenge['type']) {
+                continue;
+            }
+
+            return new AuthorizationChallenge(
+                $domain,
+                $challenge['uri'],
+                $challenge['token'],
+                $challenge['token'].'.'.$encodedHeader,
+                $this->httpClient->getLastLocation()
+            );
+        }
+
+        throw new HttpChallengeNotSupportedException();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function challengeAuthorization(AuthorizationChallenge $challenge, $timeout = 180)
+    {
+        Assert::integer($timeout, 'checkChallenge::$timeout expected an integer. Got: %s');
+
+        $payload = [
+            'resource'         => ResourcesDirectory::CHALLENGE,
+            'type'             => 'http-01',
+            'keyAuthorization' => $challenge->getPayload(),
+            'token'            => $challenge->getToken(),
+        ];
+
+        $response = $this->httpClient->signedRequest('POST', $challenge->getUrl(), $payload);
+
+        // Waiting loop
+        $endTime = time() + $timeout;
+
+        while (time() <= $endTime) {
+            $response = $this->httpClient->signedRequest('GET', $challenge->getLocation());
+
+            if ('pending' !== $response['status']) {
+                break;
+            }
+
+            sleep(1);
+        }
+
+        if ('pending' === $response['status']) {
+            throw new HttpChallengeTimedOutException($response);
+        } elseif ('valid' !== $response['status']) {
+            throw new HttpChallengeFailedException($response);
+        }
+
+        return $response;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function requestCertificate($domain, CertificateRequest $csr, $timeout = 180)
+    {
+        Assert::stringNotEmpty($domain, 'requestCertificate::$domain expected a non-empty string. Got: %s');
+        Assert::integer($timeout, 'requestCertificate::$timeout expected an integer. Got: %s');
+
+        $humanText = ['-----BEGIN CERTIFICATE REQUEST-----', '-----END CERTIFICATE REQUEST-----'];
+
+        $csrContent = $this->csrSigner->signCertificateRequest($csr);
+        $csrContent = trim(str_replace($humanText, '', $csrContent));
+        $csrContent = trim($this->httpClient->getBase64Encoder()->encode(base64_decode($csrContent)));
+
+        $response = $this->requestResource('POST', ResourcesDirectory::NEW_CERTIFICATE, [
+            'resource' => ResourcesDirectory::NEW_CERTIFICATE,
+            'csr'      => $csrContent,
+        ], false);
+
+        // If the CA has not yet issued the certificate, the body of this response will be empty
+        if (strlen(trim($response)) < 10) { // 10 to avoid false results
+            $location = $this->httpClient->getLastLocation();
+
+            // Waiting loop
+            $endTime = time() + $timeout;
+
+            while (time() <= $endTime) {
+                $response = $this->httpClient->unsignedRequest('GET', $location, null, false);
+
+                if (200 === $this->httpClient->getLastCode()) {
+                    break;
+                }
+
+                if (202 !== $this->httpClient->getLastCode()) {
+                    throw new CertificateRequestFailedException($response);
+                }
+
+                sleep(1);
+            }
+
+            if (202 === $this->httpClient->getLastCode()) {
+                throw new CertificateRequestTimedOutException($response);
+            }
+        }
+
+        // Find issuers certificate
+        $links = $this->httpClient->getLastLinks();
+        $certificatesChain = null;
+
+        foreach ($links as $link) {
+            if (!isset($link['rel']) || 'up' !== $link['rel']) {
+                continue;
+            }
+
+            $location = trim($link[0], '<>');
+            $certificate = $this->httpClient->unsignedRequest('GET', $location, null, false);
+
+            if (strlen(trim($certificate)) > 10) {
+                $pem = chunk_split(base64_encode($certificate), 64, "\n");
+                $pem = "-----BEGIN CERTIFICATE-----\n".$pem."-----END CERTIFICATE-----\n";
+
+                $certificatesChain = new Certificate($pem, $certificatesChain);
+            }
+        }
+
+        // Domain certificate
+        $pem = chunk_split(base64_encode($response), 64, "\n");
+        $pem = "-----BEGIN CERTIFICATE-----\n".$pem."-----END CERTIFICATE-----\n";
+
+        return new CertificateResponse($csr, new Certificate($pem, $certificatesChain));
+    }
+
+    /**
+     * Request a resource (URL is found using ACME server directory).
      *
-     * @param string               $caBaseUrl         The Certificate Authority base URL.
-     * @param string               $caLicense         The Certificate Authority license document URL.
-     * @param KeyPair              $accountKeyPair    The account KeyPair to use for dialog with the Certificate Authority.
-     * @param LoggerInterface|null $logger
-     * @param array                $certificatesChain
+     * @param string $method
+     * @param string $resource
+     * @param array  $payload
+     * @param bool   $returnJson
+     *
+     * @throws AcmeCoreServerException When the ACME server returns an error HTTP status code.
+     * @throws AcmeCoreClientException When an error occured during response parsing.
+     *
+     * @return array|string
      */
-    public function __construct(
-        $caBaseUrl,
-        $caLicense,
-        KeyPair $accountKeyPair = null,
-        LoggerInterface $logger = null,
-        array $certificatesChain = []
-    ) {
-        parent::__construct(null, $logger);
-
-        $this->caBaseUrl = $caBaseUrl;
-        $this->caLicense = $caLicense;
-        $this->certificatesChain = $certificatesChain;
-
-        $this->useAccountKeyPair($accountKeyPair);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    protected function getCABaseUrl()
+    protected function requestResource($method, $resource, array $payload, $returnJson = true)
     {
-        return $this->caBaseUrl;
-    }
+        if (!$this->directory) {
+            $this->directory = new ResourcesDirectory(
+                $this->httpClient->unsignedRequest('GET', $this->directoryUrl, null, true)
+            );
+        }
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function getCALicense()
-    {
-        return $this->caLicense;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getCertificatesChain()
-    {
-        return $this->certificatesChain;
+        return $this->httpClient->signedRequest(
+            $method,
+            $this->directory->getResourceUrl($resource),
+            $payload,
+            $returnJson
+        );
     }
 }
