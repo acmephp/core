@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>Acme PHP Core</title>
+
+        <link rel="stylesheet" href="https://acmephp.github.io/core/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://acmephp.github.io/core/css/font-awesome.min.css">
+        <link rel="stylesheet" href="https://acmephp.github.io/core/css/highlight.tomorrow-night.css">
+        <link rel="stylesheet" href="https://acmephp.github.io/core/css/main.css">
+    </head>
+    <body>
+
+        <header class="navbar navbar-default navbar-fixed-top">
+
+            <a class="navbar-brand" href="https://acmephp.github.io/core/">
+                Acme PHP Core
+                <small class="hidden-xs hidden-sm">
+                    PHP implementation of the ACME/Let's Encrypt protocol
+                </small>
+            </a>
+
+                            <a href="https://github.com/acmephp/core">
+                    <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/38ef81f8aca64bb9a64448d0d70f1308ef5341ab/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png">
+                </a>
+            
+        </header>
+
+        <main class="container-fluid">
+            <div class="row">
+
+                
+                    <nav id="sidebar" class="col-sm-3 col-lg-2" role="navigation">
+
+                                                    <p class="text-muted">
+                                Quick start
+                            </p>
+
+                            <ul class="nav nav-pills nav-stacked">
+                                                                    <li class="active">
+                                        <a href="https://acmephp.github.io/core/">
+                                            Introduction
+                                        </a>
+                                    </li>
+                                                                    <li class="">
+                                        <a href="https://acmephp.github.io/core/get-started.html">
+                                            Get started
+                                        </a>
+                                    </li>
+                                                            </ul>
+                        
+                    </nav>
+
+                
+                <section class="col-sm-offset-3 col-lg-offset-2 col-sm-9 col-lg-10">
+                    <h1 id="acme-php-core">Acme PHP Core</h1>
+<blockquote>
+<p>This library is a part of the <a href="https://github.com/acmephp">Acme PHP initiative</a>,
+aiming to intregrate <a href="https://github.com/acmephp">Let's Encrypt</a>
+in the PHP world at the application level.</p>
+</blockquote>
+<p>Acme PHP Core is the core of the Acme PHP project : it is a basis for the others more
+high-level repositories.</p>
+<h2 id="when-use-acme-php-core">When use Acme PHP Core?</h2>
+<p>You usually will want to use either <a href="https://github.com/acmephp/cli">the Acme PHP CLI client</a>
+or <a href="https://github.com/acmephp">an implementation for your application framework</a>.</p>
+<p>However, in some cases, you may want to manage from the application itself your SSL certificates.
+In these cases, this library will be useful to you.</p>
+<p>Acme PHP Core does nothing more than implementing the
+<a href="https://github.com/letsencrypt/acme-spec">Let's Encrypt/ACME protocol</a> : the generated SSL keys
+and certificates are stored in memory and then given to your script. You are the one in charge
+of storing them somewhere. You can use
+<a href="https://github.com/acmephp/persistence">the Acme PHP Persistence</a> library to help you do so.</p>
+                </section>
+
+            </div>
+        </main>
+
+        <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+        <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+        <script src="//yandex.st/highlightjs/7.5/highlight.min.js"></script>
+
+        <script>
+            $(function() {
+                $("section>h1").wrap('<div class="page-header" />');
+                // Syntax highlighting
+                hljs.initHighlightingOnLoad();
+            });
+        </script>
+
+    </body>
+</html>
