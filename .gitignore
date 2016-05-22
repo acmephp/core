@@ -3,3 +3,4 @@ vendor/
 .php_cs.cache
 tests/Fixtures/challenges/.well-known/acme-challenge/*
 !tests/Fixtures/challenges/.well-known/acme-challenge/.gitkeep
+doc/.couscous

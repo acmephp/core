@@ -1,50 +1,56 @@
 Acme PHP Core
 =============
 
-[![Build Status](https://travis-ci.org/acmephp/core.svg?branch=master)](https://travis-ci.org/acmephp/core)
+[![Build Status](https://img.shields.io/travis/acmephp/core/master.svg?style=flat-square)](https://travis-ci.org/acmephp/core)
+[![Quality Score](https://img.shields.io/scrutinizer/g/acmephp/core.svg?style=flat-square)](https://scrutinizer-ci.com/g/acmephp/core)
 [![StyleCI](https://styleci.io/repos/51226077/shield)](https://styleci.io/repos/51226077)
+[![Packagist Version](https://img.shields.io/packagist/v/acmephp/core.svg?style=flat-square)](https://packagist.org/packages/acmephp/core)
+[![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE)
 
-> Note : this repository is alpha stage
+> Note : this repository is in alpha stage.
 
-The ACME protocol is a protocol defined by the Let's Encrypt Certificate Authority.
-You can see the complete specification on https://letsencrypt.github.io/acme-spec/.
+> This library is a part of the [Acme PHP initiative](https://github.com/acmephp),
+> aiming to intregrate [Let's Encrypt](https://github.com/acmephp)
+> in the PHP world at the application level.
 
-The ACME PHP project aims to implement the ACME protocol in PHP to be able to use it
-easily in various projects.
+Acme PHP Core is the core of the Acme PHP project : it is a basis for the others more
+high-level repositories.
 
-This repository is the core of the project : it is a basis for the other repositories.
+## When use Acme PHP Core?
 
-If you want a more high-level library, have a look at the [other ACME PHP repositories](https://github.com/acmephp). 
-There are some very useful framework implementations.
+You usually will want to use either [the Acme PHP CLI client](https://github.com/acmephp/cli)
+or [an implementation for your application framework](https://github.com/acmephp).
 
-How to use this library?
-------------------------
+However, in some cases, you may want to manage SSL certificates directly from your application.
+In these cases, this library will be useful to you.
 
-This library provides the building blocks for you to create your own certificates management script.
-It does nothing more than implementing the protocol : the generated SSL keys and certificates are
-stored in memory and then given to your script. You are the one who need to store/retrieve them using
-utilities provided by the library (`KeyPairManager` is very useful for that).
+Acme PHP Core does nothing more than implementing the
+[Let's Encrypt/ACME protocol](https://github.com/letsencrypt/acme-spec) : the generated SSL keys
+and certificates are stored in memory and then given to your script. You are the one in charge
+of storing them somewhere. You can use
+[the Acme PHP Persistence](https://github.com/acmephp/persistence) library to help you do so.
 
-This schema gives an idea of how the library should be used (you can read the API documentation to learn more):
+## Documentation
 
-![How ACME PHP works?](https://raw.githubusercontent.com/acmephp/core/master/docs/acme.jpg)
+Read the official [Acme PHP Core documentation](https://acmephp.github.io/core/).
 
-Logging
--------
+## Launch the Test suite
 
-Acme PHP Core provides a logging mechanism based on `psr/log` standard. You can provide a logger to
-your Acme PHP client:
+The Acme PHP Core test suite uses the Docker Boulder image to create an ACME server.
 
-```` php
-<?php
-$client = new LetsEncryptClient(KeyPairManager::load('/.../public.pem', '/.../private.pem'), $logger);
+In the Acme PHP Core root directory:
+
+```
+# Get the dev dependencies
+composer update
+
+# Start the ACME server Docker container
+docker run -d --net host acmephp/testing-ca
+
+# Run the tests
+vendor/bin/phpunit
 ```
 
-Acme PHP Core registers logs using the following convention:
-
--   Informations about the progress of registering, requesting or checking elements is logged
-    as `DEBUG` ;
--   Success messages (such as the successful check of a domain or the successful request of a
-    certificate) are logged as `INFO` ;
--   Error messages (such as the error to check a domain or the error to request a
-    certificate) are logged as `ERROR` ;
+**Warning**: as the acmephp/testing-ca Docker image needs to be mapped to the host network,
+you may have ports conflicts. See [https://github.com/acmephp/testing-ca](https://github.com/acmephp/testing-ca)
+for more informations.

@@ -1,0 +1,19 @@
+title: Acme PHP Core
+subTitle: PHP implementation of the ACME/Let's Encrypt protocol
+github:
+    user: acmephp
+    repo: core
+baseUrl: https://acmephp.github.io/core/
+template:
+    url: https://github.com/CouscousPHP/Template-Dark
+    index: introduction.md
+menu:
+    sections:
+        main:
+            name: Quick start
+            items:
+                introduction:
+                    text: Introduction
+                get-started:
+                    text: Get started
+                    relativeUrl: get-started.html
