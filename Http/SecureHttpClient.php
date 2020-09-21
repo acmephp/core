@@ -315,7 +315,7 @@ class SecureHttpClient
      *
      * @return array|string Array of parsed JSON if $returnJson = true, string otherwise
      */
-    public function request($method, $endpoint, array $data = [], $returnJson = true)
+    public function request($method, $endpoint, array $data = [], $returnJson = true, $returnOnlyHeaders = false)
     {
         $call = function () use ($method, $endpoint, $data) {
             $request = $this->createRequest($method, $endpoint, $data);
@@ -332,6 +332,10 @@ class SecureHttpClient
             $request = $call();
         } catch (BadNonceServerException $e) {
             $request = $call();
+        }
+
+        if ($returnOnlyHeaders) {
+          return $this->lastResponse->getHeaders();
         }
 
         $body = \GuzzleHttp\Psr7\copy_to_string($this->lastResponse->getBody());

@@ -31,6 +31,8 @@ class CertificateOrder
      */
     private $orderEndpoint;
 
+    private bool $should_return_alternate_certificate_if_available = false;
+
     /**
      * @param string $domain
      * @param string $type
@@ -106,5 +108,23 @@ class CertificateOrder
     public function getOrderEndpoint()
     {
         return $this->orderEndpoint;
+    }
+
+    public function returnAlternateCertificateIfAvailable() : self
+    {
+
+        $order = clone $this;
+
+        $order->should_return_alternate_certificate_if_available = true;
+
+        return $order;
+
+    }
+
+    public function shouldReturnAlternateCertificateIfAvailable() : bool
+    {
+
+        return $this->should_return_alternate_certificate_if_available;
+
     }
 }

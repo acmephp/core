@@ -222,6 +222,19 @@ class AcmeClient implements AcmeClientV2Interface
         return $this->finalizeOrder($order, $csr, $timeout);
     }
 
+    public function requestAlternateCertificate($domain, CertificateRequest $csr, $timeout = 180)
+    {
+        Assert::stringNotEmpty($domain, 'requestCertificate::$domain expected a non-empty string. Got: %s');
+        Assert::integer($timeout, 'requestCertificate::$timeout expected an integer. Got: %s');
+
+        $order = $this->requestOrder(array_unique(array_merge([$domain], $csr->getDistinguishedName()->getSubjectAlternativeNames())));
+
+        /** @var \AcmePhp\Core\Protocol\CertificateOrder $order */
+        $order = $order->returnAlternateCertificateIfAvailable();
+
+        return $this->finalizeOrder($order, $csr, $timeout, true);
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -253,13 +266,24 @@ class AcmeClient implements AcmeClientV2Interface
             throw new CertificateRequestFailedException('The order has not been validated');
         }
 
-        $response = $client->request('POST', $response['certificate'], $client->signKidPayload($response['certificate'], $this->getResourceAccount(), null), false);
-        $certificatesChain = null;
-        foreach (array_reverse(explode("\n\n", $response)) as $pem) {
-            $certificatesChain = new Certificate($pem, $certificatesChain);
+        if ($order->shouldReturnAlternateCertificateIfAvailable()) {
+          $response_headers = $this->executeAcmeCertificateRequest($response['certificate'], false, true);
+
+          // Check to see if response headers include link to alternate certificate download
+          if (isset($response_headers['Link'][1])) {
+
+            $matches = [];
+            preg_match('/<(http.*acme\/cert\/.*\/\d)>;rel="alternate"/', $response_headers['Link'][1], $matches);
+
+            // If response headers include valid alternate certificate link, return that certificate instead
+            if (isset($matches[1])) {
+              return $this->returnCertificateResponse($csr, $this->executeAcmeCertificateRequest($matches[1], true, false));
+            }
+          }
         }
 
-        return new CertificateResponse($csr, $certificatesChain);
+        return $this->returnCertificateResponse($csr, $this->executeAcmeCertificateRequest($response['certificate'], true, false));
+
     }
 
     /**
@@ -370,5 +394,33 @@ class AcmeClient implements AcmeClientV2Interface
             $response['token'],
             $response['token'].'.'.$base64encoder->encode($this->getHttpClient()->getJWKThumbprint())
         );
+    }
+
+    private function executeAcmeCertificateRequest(string $cert_url, bool $return_cert_as_string, bool $return_response_headers)
+    {
+
+      $client = $this->getHttpClient();
+
+      return $client->request(
+        'POST',
+        $cert_url,
+        $client->signKidPayload($cert_url, $this->getResourceAccount(), null),
+        !$return_cert_as_string,
+        $return_response_headers
+      );
+
+    }
+
+    private function returnCertificateResponse(CertificateRequest $csr, string $certificate)
+    {
+
+      $certificatesChain = null;
+
+      foreach (array_reverse(explode("\n\n", $certificate)) as $pem) {
+          $certificatesChain = new Certificate($pem, $certificatesChain);
+      }
+
+      return new CertificateResponse($csr, $certificatesChain);
+
     }
 }
